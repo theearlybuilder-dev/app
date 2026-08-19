@@ -582,70 +582,95 @@ const SIM_SCRIPTS = {
     intro: "You're a first-year analyst at a big investment bank in NYC. Your client wants to buy a smaller company. Your job today: build a spreadsheet that estimates what it's worth. No right answers — just pick how you'd naturally work.",
     start: "s1",
     scenes: {
+      // ONE DAY, THREE RUNNING THREADS. Your senior (a person), the lunchtime
+      // rumor about hidden problems (a truth you either wire in or duck), and
+      // the 22% customer-concentration number (a guess that walks into a client
+      // meeting as fact if you don't own it). Each thread comes back more than
+      // once, and how you left it earlier changes both the words AND the options
+      // you get later. Kept short and plain on purpose.
       s1: { time: "8:45 AM",
         scene: "Your boss sent a 52-page report at 6 AM with one line: 'Need a value estimate by end of day.' You have 9 hours. Where do you start?",
         stat: { label: "First move", tone: "neutral" },
         choices: [
           { text: "Read all 52 pages first. ~90 min. Then build.", mins: 90, tone: 42, next: "s2" },
           { text: "Open the spreadsheet now. Skim the report as you go.", mins: 20, tone: 82, next: "s2" },
-          { text: "Ask your senior: 'What are the 2-3 things I need to know first?'", mins: 10, tone: 92, sets: { asked: true }, next: "s2" }
+          { text: "Ask your senior: 'What are the 2-3 things I need to know first?'", mins: 10, tone: 92, sets: { askedSenior: true }, next: "s2" }
         ] },
+      // THREAD (senior) — framed by whether you leaned on them at 8:45.
       s2: { time: "9:30 AM",
-        scene: "Your senior stops by: 'Boss will want three estimates, not one.' Same 8 hours. The first one is barely started.",
+        scene: (ctx) => ctx.has("askedSenior")
+          ? "Your senior stops back. 'Boss will want three estimates, not one. Trading multiples is the one she'll grill you on.' Same 8 hours."
+          : "Your senior stops by: 'Boss will want three estimates, not one.' Same 8 hours. The first one is barely started.",
         stat: { label: "Triple the work", tone: "bad" },
         choices: [
           { text: "Build all three at once. Jump between them.", tone: 70, next: "s3" },
           { text: "Nail the main one first. Rush the other two after.", tone: 55, next: "s3" },
           { text: "Do the main one. By 3 PM, decide if the others are realistic.", tone: 90, next: "s3" }
         ] },
+      // THREAD (senior) can turn ugly here: ghosting the call is the mistake
+      // you'll get a chance to own up to at 10:15 PM.
       s3: { time: "10:45 AM",
         scene: "A senior analyst pulls you into a 40-minute call about a different deal. 'Just listen — you'll learn.' You have no role in it. Your spreadsheet is 15% done.",
         stat: { label: "Spreadsheet at 15%", tone: "bad" },
         choices: [
-          { text: "Full attention. Take notes. This is how you learn.", mins: 55, tone: 20, next: "s4_behind" },
-          { text: "Mute, camera off, keep building. Learn on a lighter day.", mins: 5, tone: 88, next: "s4_ontrack" },
-          { text: "Camera on, look engaged, half-build in the background.", mins: 35, tone: 52, next: "s4_ontrack" }
+          { text: "Full attention. Take notes. This is how you learn.", mins: 55, tone: 20, mark: { id: "behind", note: "you sat through a call that had nothing to do with your model" }, next: "s4" },
+          { text: "Mute, camera off, keep building. Learn on a lighter day.", mins: 5, tone: 88, mark: { id: "ghostedCall", note: "you muted a senior's call to build through it" }, next: "s4" },
+          { text: "Camera on, look engaged, half-build in the background.", mins: 35, tone: 52, next: "s4" }
         ] },
-      s4_ontrack: { time: "12:15 PM",
-        scene: "You open the company's yearly report for real numbers. 200+ pages. You need sales, costs, cash flow, and risks.",
-        stat: { label: "200 pages", tone: "neutral" },
+      s4: { time: "12:15 PM",
+        scene: (ctx) => ctx.has("behind")
+          ? "That call ran 55 minutes, not 40. Your spreadsheet is still 15% done. Now you open a 200-page yearly report — under 4 hours until your boss expects a first look."
+          : ctx.has("ghostedCall")
+            ? "You skipped the call and pushed the model to 25%. Now you open the company's yearly report for real numbers. 200+ pages. You need sales, costs, cash flow, and risks."
+            : "You open the company's yearly report for real numbers. 200+ pages. You need sales, costs, cash flow, and risks.",
+        stat: (ctx) => ctx.has("behind") ? { label: "Behind schedule", tone: "bad" } : { label: "200 pages", tone: "neutral" },
         choices: [
           { text: "Read it front to back. 90 min. Miss nothing.", mins: 90, tone: 22, next: "s5" },
           { text: "Jump straight to the numbers section. 25 min.", mins: 25, tone: 82, next: "s5" },
-          { text: "Search the PDF for 'revenue,' 'customer,' 'risks.' Fastest.", mins: 12, tone: 88, next: "s5" }
+          { text: "Search the PDF for 'revenue,' 'customer,' 'risks.' 12 min.", mins: 12, tone: 88, next: "s5" }
         ] },
-      s4_behind: { time: "12:15 PM",
-        scene: "The call ran 55 minutes, not 40. Your spreadsheet is still 15% done. Now you open a 200-page yearly report with under 4 hours until your boss expects a first look.",
-        stat: { label: "Behind schedule", tone: "bad" },
-        choices: [
-          { text: "Read it front to back anyway. Catch up somewhere else.", mins: 90, tone: 15, next: "s5" },
-          { text: "Search the PDF for 'revenue,' 'customer,' 'risks.' Skip the rest.", mins: 12, tone: 80, next: "s5" },
-          { text: "Message your senior: 'Meeting ran long, spreadsheet at 15%. Should I warn them now?'", mins: 10, tone: 90, next: "s5" }
-        ] },
+      // THREAD (rumor) begins.
       s5: { time: "1:30 PM",
-        scene: "Lunch. Someone mentions a rumor: another bank passed on this deal last week, saying the company had 'hidden problems.' Four hours until your spreadsheet is due.",
+        scene: "Lunch. Someone mentions a rumor: another bank passed on this deal last week, saying the company had 'hidden problems.' Four hours until your model is due.",
         stat: { label: "Rumor, no source", tone: "neutral" },
         choices: [
-          { text: "Spend 30 min after lunch digging for red flags in the numbers.", mins: 30, tone: 90, next: "s6" },
-          { text: "Ignore it. Your job is the model. Rumors are noise.", mins: 0, tone: 58, next: "s6" },
-          { text: "Ask your senior: 'Heard this? Should I look into it?'", mins: 10, tone: 74, next: "s6" }
+          { text: "Spend 30 min after lunch digging for red flags in the numbers.", mins: 30, tone: 90, sets: { dugForFlags: true }, next: "s6" },
+          { text: "Stay on the model. A rumor without a source stays a rumor.", mins: 0, tone: 58, mark: { id: "dismissedRumor", note: "you brushed off a rumor another bank walked from" }, next: "s6" },
+          { text: "Ask your senior: 'Heard this? Should I look into it?'", mins: 10, tone: 74, sets: { askedAboutRumor: true }, next: "s6" }
         ] },
+      // THREAD (churn) begins — and if you dug at lunch, a gated option lets
+      // you tie the rumor into the churn number instead of guessing.
       s6: { time: "3:00 PM",
-        scene: "Boss messages: 'What if the company loses its biggest customer? That's 22% of sales.' You have no data on how likely that is. You have to guess.",
-        stat: { label: "No data", tone: "neutral" },
-        choices: [
-          { text: "Look up how often companies lose big customers. 45 min, but solid.", mins: 45, tone: 66, next: "s7" },
-          { text: "Pick a number from your gut (say 15%), model it, move on.", mins: 5, tone: 80, next: "s7" },
-          { text: "Make it a slider — boss can change it herself when she reviews.", mins: 20, tone: 82, next: "s7" }
-        ] },
+        scene: (ctx) => ctx.has("dugForFlags")
+          ? "Boss messages: 'What if they lose their biggest customer? That's 22% of sales.' You dug into red flags at lunch — the biggest one was their top customer's contract coming up for renewal next year."
+          : ctx.has("askedAboutRumor")
+            ? "Boss messages: 'What if they lose their biggest customer? That's 22% of sales.' Your senior said the rumor was worth a look — you haven't gotten to it yet."
+            : "Boss messages: 'What if the company loses its biggest customer? That's 22% of sales.' You have no data on how likely. You have to guess.",
+        stat: { label: "The 22% question", tone: "neutral" },
+        choices: (ctx) => {
+          const arr = [
+            { text: "Look up how often companies lose big customers. 45 min, but solid.", mins: 45, tone: 66, sets: { researchedChurn: true }, next: "s7" },
+            { text: "Pick a number from your gut (say 15%), model it, move on.", mins: 5, tone: 80, mark: { id: "guessedChurn", note: "you picked the churn number out of thin air" }, next: "s7" },
+            { text: "Make it a slider — boss can change it herself when she reviews.", mins: 20, tone: 82, sets: { sliderChurn: true }, next: "s7" }
+          ];
+          if (ctx.has("dugForFlags"))
+            arr.push({ text: "Use the renewal risk you found at lunch as your base case.", mins: 25, tone: 92, mark: { id: "linkedRumorToChurn", note: "you tied the lunchtime rumor into a real churn risk" }, next: "s7" });
+          return arr;
+        } },
+      // THREAD (churn) continues — recovery option only exists BECAUSE you guessed.
       s7: { time: "5:00 PM",
         scene: "Your spreadsheet says the company is worth $1.0–1.4B. The client wants to offer $1.15B. Time to write the one-page summary that lands on their desk tomorrow.",
         stat: { label: "Summary time", tone: "neutral" },
-        choices: [
-          { text: "One page. Just the range, the offer, the midpoint. Read in 30 sec.", mins: 25, tone: 82, next: "s8" },
-          { text: "Two pages. The range, the three methods, the assumptions behind each.", mins: 45, tone: 68, next: "s8" },
-          { text: "One page, three cases: best, likely, worst — a short story for each.", mins: 40, tone: 86, next: "s8" }
-        ] },
+        choices: (ctx) => {
+          const arr = [
+            { text: "One page. Just the range, the offer, the midpoint. Read in 30 sec.", mins: 25, tone: 82, next: "s8" },
+            { text: "Two pages. The range, the three methods, the assumptions behind each.", mins: 45, tone: 68, next: "s8" },
+            { text: "One page, three cases: best, likely, worst — a short story for each.", mins: 40, tone: 86, next: "s8" }
+          ];
+          if (ctx.has("guessedChurn"))
+            arr.push({ text: "Same one-pager, but footnote the 15% guess so nobody reads it as fact.", mins: 15, tone: 90, mark: { id: "flaggedGuess", note: "you footnoted your churn guess before it hardened into fact" }, next: "s8" });
+          return arr;
+        } },
       s8: { time: "6:30 PM",
         scene: "Boss: 'Assume the buyer saves 15% on costs after combining. Rebuild.' The answer shifts. How much do you show?",
         stat: { label: "New assumption", tone: "neutral" },
@@ -656,31 +681,68 @@ const SIM_SCRIPTS = {
         ],
         // flag-driven pivot: if you asked your senior for context at 8:45 AM,
         // that relationship pays off now — they offer to co-review.
-        next: (flags) => flags.asked ? "s9_helped" : "s9_solo" },
+        next: (flags) => flags.askedSenior ? "s9_helped" : "s9_solo" },
+      // THREAD (rumor) BITES: if you dismissed it and never wired it in, the
+      // boss's own review names it. And a "make it right" option only exists
+      // because you skipped it. (Never surfaced if you researched or slidered.)
       s9_solo: { time: "8:20 PM",
-        scene: "Boss sends 34 review comments. 28 are formatting, 6 change the numbers. She wants version 3 by 10:30 PM. You're on your own.",
-        stat: { label: "34 comments · solo", tone: "bad" },
-        choices: [
-          { text: "Do all 34 in her order. Predictable.", mins: 75, tone: 50, next: "s10" },
-          { text: "Do the 6 real ones first. Formatting last, in case time runs out.", mins: 55, tone: 90, next: "s10" },
-          { text: "Message another first-year: 'Can you take formatting?'", mins: 40, tone: 68, next: "s10" }
-        ] },
+        scene: (ctx) => (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn") && !ctx.has("salvaged"))
+          ? "Boss sends 34 review comments. 28 are formatting, 6 change the numbers — and one asks: 'Did you check contract renewals? I heard another bank walked from this over concentration risk.' Version 3 by 10:30 PM. You're on your own."
+          : "Boss sends 34 review comments. 28 are formatting, 6 change the numbers. She wants version 3 by 10:30 PM. You're on your own.",
+        stat: (ctx) => (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn"))
+          ? { label: "She's onto the rumor", tone: "bad" }
+          : { label: "34 comments · solo", tone: "bad" },
+        choices: (ctx) => {
+          const arr = [
+            { text: "Do all 34 in her order. Predictable.", mins: 75, tone: 50, next: "s10" },
+            { text: "Do the 6 real ones first. Formatting last, in case time runs out.", mins: 55, tone: 90, next: "s10" },
+            { text: "Message another first-year: 'Can you take formatting?'", mins: 40, tone: 68, mark: { id: "askedPeer", note: "you leaned on a first-year to swallow your formatting" }, next: "s10" }
+          ];
+          if (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn"))
+            arr.push({ text: "Pull the renewal contracts you skipped at lunch. Get ahead of her question.", mins: 50, tone: 88, mark: { id: "salvaged", note: "you dragged the rumor into the model before she asked twice" }, next: "s10" });
+          return arr;
+        } },
       s9_helped: { time: "8:20 PM",
-        scene: "Boss sends 34 review comments. 28 are formatting, 6 change the numbers. She wants version 3 by 10:30 PM. Your senior messages first: 'I can take formatting if you take the numbers. Yes or no?'",
-        stat: { label: "34 comments · offered help", tone: "neutral" },
-        choices: [
-          { text: "'Yes, please — I'll own the 6 real edits.'", mins: 45, tone: 86, next: "s10" },
-          { text: "'Thanks, I've got it — you've done enough today.'", mins: 70, tone: 52, next: "s10" },
-          { text: "'Can you take formatting and spot-check my number changes?'", mins: 40, tone: 90, next: "s10" }
-        ] },
+        scene: (ctx) => (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn") && !ctx.has("salvaged"))
+          ? "Boss sends 34 comments — one asks about contract renewals ('I heard another bank walked from this'). Your senior offers: 'I can take formatting if you take the numbers. Yes or no?'"
+          : "Boss sends 34 review comments. 28 are formatting, 6 change the numbers. She wants version 3 by 10:30 PM. Your senior messages first: 'I can take formatting if you take the numbers. Yes or no?'",
+        stat: (ctx) => (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn"))
+          ? { label: "She's onto the rumor", tone: "bad" }
+          : { label: "34 comments · offered help", tone: "neutral" },
+        choices: (ctx) => {
+          const arr = [
+            { text: "'Yes, please — I'll own the 6 real edits.'", mins: 45, tone: 86, next: "s10" },
+            { text: "'Thanks, I've got it — you've done enough today.'", mins: 70, tone: 52, next: "s10" },
+            { text: "'Can you take formatting and spot-check my number changes?'", mins: 40, tone: 90, next: "s10" }
+          ];
+          if (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn"))
+            arr.push({ text: "'Yes — and can you scan the contracts for renewal risk? I skipped it at lunch.'", mins: 55, tone: 92, mark: { id: "salvaged", note: "you pulled your senior in to catch what you missed on the rumor" }, next: "s10" });
+          return arr;
+        } },
+      // THREAD (senior) BITES: if you muted his call and never asked him
+      // anything else, he's short. A one-line apology exists only because of
+      // what you did. If you already built the relationship, this is easy.
       s10: { time: "10:15 PM",
-        scene: "You send version 3. Boss is in a meeting, silent. You order dinner. Your senior messages: 'Free for a quick chat?' No context.",
-        stat: { label: "Interruption", tone: "neutral" },
-        choices: [
-          { text: "'Sure — call me now.'", mins: 15, tone: 84, next: "s11" },
-          { text: "'Give me 15 min, finishing something.'", mins: 25, tone: 66, next: "s11" },
-          { text: "'What's up? Text me?'", mins: 8, tone: 54, next: "s11" }
-        ] },
+        scene: (ctx) => {
+          if (ctx.has("ghostedCall") && !ctx.has("apologizedSenior") && !ctx.has("askedSenior"))
+            return "You send version 3. Your senior messages: 'Free to chat?' Two words, flat. You know he clocked that you muted his call earlier.";
+          if (ctx.has("askedSenior"))
+            return "You send version 3. Your senior messages: 'Free for a quick chat?' The tone is easy — you've been in each other's day.";
+          return "You send version 3. Boss is in a meeting, silent. You order dinner. Your senior messages: 'Free for a quick chat?' No context.";
+        },
+        stat: (ctx) => (ctx.has("ghostedCall") && !ctx.has("apologizedSenior") && !ctx.has("askedSenior"))
+          ? { label: "You owe him one", tone: "bad" }
+          : { label: "Interruption", tone: "neutral" },
+        choices: (ctx) => {
+          const arr = [
+            { text: "'Sure — call me now.'", mins: 15, tone: 84, next: "s11" },
+            { text: "'Give me 15 min, finishing something.'", mins: 25, tone: 66, next: "s11" },
+            { text: "'What's up? Text me?'", mins: 8, tone: 54, next: "s11" }
+          ];
+          if (ctx.has("ghostedCall") && !ctx.has("apologizedSenior"))
+            arr.push({ text: "'Call me now — and about the meeting earlier: I muted, sorry.'", mins: 20, tone: 88, mark: { id: "apologizedSenior", note: "you owned that you muted your senior's call" }, next: "s11" });
+          return arr;
+        } },
       s11: { time: "11:50 PM",
         scene: "Boss is back: 'The slides are fine, but the story doesn't flow. Recommendation on page one, then analysis, then details. Print-ready by 8 AM.' You've been at this 15 hours. That's ~90 more minutes.",
         stat: { label: "One last rework", tone: "bad" },
@@ -689,9 +751,69 @@ const SIM_SCRIPTS = {
           { text: "Just move the summary to page one and tighten a few slides.", mins: 25, tone: 24, next: "s12" },
           { text: "Walk to your senior: 'Is this a full rework or just moving pages?'", mins: 45, tone: 60, next: "s12" }
         ] },
+      // The day, read back to you. Every thread you left open — or made right —
+      // gets named. Recovery (salvaged, flaggedGuess, apologizedSenior)
+      // rewrites the guilt.
       s12: { time: "7:45 AM (Wed)",
-        scene: "You're back in. Boss glances at your slides: 'Client meeting at 10 — you're in the room,' and keeps walking. In two hours a $1.15B decision gets made, partly on what you built last night. You'll never know how much you shaped it. This is the job.",
-        stat: { label: "Day 2", tone: "neutral" },
+        scene: (ctx) => {
+          const threads = [];
+          // senior
+          if (ctx.has("ghostedCall") && !ctx.has("apologizedSenior") && !ctx.has("askedSenior"))
+            threads.push("a senior who noticed you muted his call");
+          else if (ctx.has("apologizedSenior"))
+            threads.push("a senior you owned up to about the call");
+          else if (ctx.has("askedSenior"))
+            threads.push("a senior who now knows what you're worth");
+          // rumor
+          if (ctx.has("linkedRumorToChurn"))
+            threads.push("a rumor you built into the model as a real risk");
+          else if (ctx.has("salvaged"))
+            threads.push("a rumor you almost skipped but pulled back in");
+          else if (ctx.has("dismissedRumor"))
+            threads.push("a rumor you shrugged off");
+          else if (ctx.has("dugForFlags"))
+            threads.push("red flags you dug up but didn't wire in");
+          // churn number
+          if (ctx.has("flaggedGuess"))
+            threads.push("a churn guess you owned in a footnote");
+          else if (ctx.has("guessedChurn"))
+            threads.push("a churn number about to walk in as fact");
+          else if (ctx.has("sliderChurn"))
+            threads.push("the churn number handed to your boss as a dial");
+          else if (ctx.has("researchedChurn"))
+            threads.push("a churn number you actually researched");
+          // peer
+          if (ctx.has("askedPeer"))
+            threads.push("a first-year holding your formatting");
+
+          const hid = (ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn") && !ctx.has("salvaged"))
+            || (ctx.has("guessedChurn") && !ctx.has("flaggedGuess"))
+            || (ctx.has("ghostedCall") && !ctx.has("apologizedSenior") && !ctx.has("askedSenior"));
+          const clean = !hid && (ctx.has("linkedRumorToChurn") || ctx.has("flaggedGuess") || ctx.has("apologizedSenior") || ctx.has("askedSenior") || ctx.has("researchedChurn"));
+
+          const close = clean
+            ? " Nothing you're carrying into that room is something you tried to hide. This is the job."
+            : hid
+              ? " Part of what's in there is something you're hoping nobody looks at too closely. This is the job."
+              : " You'll never know how much you shaped it. This is the job.";
+          const opener = "You're back in. Boss glances at your slides: 'Client meeting at 10 — you're in the room,' and keeps walking.";
+          const middle = threads.length
+            ? ` In two hours a $1.15B decision gets made, partly on what you built last night, and you walk in with ${oxford(threads)}.`
+            : " In two hours a $1.15B decision gets made, partly on what you built last night.";
+          return opener + middle + close;
+        },
+        stat: (ctx) => {
+          const debts = [
+            ctx.has("dismissedRumor") && !ctx.has("linkedRumorToChurn") && !ctx.has("salvaged"),
+            ctx.has("guessedChurn") && !ctx.has("flaggedGuess"),
+            ctx.has("ghostedCall") && !ctx.has("apologizedSenior") && !ctx.has("askedSenior")
+          ].filter(Boolean).length;
+          return debts >= 2
+            ? { label: "The bill comes due", tone: "bad" }
+            : debts === 0
+              ? { label: "A day you'd run again", tone: "good" }
+              : { label: "Day 2", tone: "neutral" };
+        },
         choices: [] }
     }
   },
