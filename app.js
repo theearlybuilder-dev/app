@@ -4598,7 +4598,7 @@ const _initEmail = _initUser?.email || null;
 const state = {
   screen: store.get("cc_screen", "landing"),
   user: _initUser,
-  dark: store.get("cc_dark", true),
+  dark: store.get("cc_dark_v2", true),
   quizAnswers: store.get(dataKey("quizAnswers", _initEmail), {}),
   completedSims: store.get(dataKey("sims", _initEmail), []),
   report: store.get(dataKey("report", _initEmail), null),
@@ -4639,7 +4639,7 @@ if (_initEmail) {
 function persist() {
   store.set("cc_screen", state.screen);
   store.set("cc_user", state.user);
-  store.set("cc_dark", state.dark);
+  store.set("cc_dark_v2", state.dark);
   const email = state.user?.email || null;
   store.set(dataKey("quizAnswers", email), state.quizAnswers);
   store.set(dataKey("sims", email), state.completedSims);
