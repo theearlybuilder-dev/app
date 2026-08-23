@@ -7,27 +7,111 @@ const EYE_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" st
 // ============================================================
 // DATA
 // ============================================================
+// `group` = coarse category (used by prose-fallback templates).
+// `subgroup` = fine-grained field shown in the picker & report.
 const CAREERS = [
-  { id: "ib", label: "Investment Banker", group: "Business & Money", plain: "Helps big companies buy other companies. Long hours, high pay, lots of spreadsheets.", tag: "M&A analyst at a bulge bracket bank" },
-  { id: "consult", label: "Management Consultant", group: "Business & Money", plain: "Companies hire you to solve their biggest problems. Lots of travel, slide decks, meetings.", tag: "MBB firm, client on-site" },
-  { id: "quant", label: "Quant Trader", group: "Business & Money", plain: "Uses math and code to trade stocks and make (or lose) money fast.", tag: "prop desk, systematic strategies" },
-  { id: "founder", label: "Startup Founder", group: "Business & Money", plain: "Starts a company from scratch. High risk, high freedom, mostly chaos.", tag: "early-stage founder, pre-revenue" },
-  { id: "pm", label: "Product Manager", group: "Business & Money", plain: "Decides what an app or product should do next. Talks to everyone all day.", tag: "B2C app, growth stage" },
-  { id: "marketing", label: "Brand Marketer", group: "Business & Money", plain: "Builds how people feel about a brand. Half creative, half data.", tag: "D2C brand, performance + creative" },
-  { id: "swe", label: "Software Engineer", group: "Tech & Science", plain: "Writes code to build apps, websites, or systems. Deep focus work.", tag: "product team at a scale-up" },
-  { id: "ml", label: "AI / ML Engineer", group: "Tech & Science", plain: "Trains computers to learn from data — like the systems behind ChatGPT.", tag: "applied ML at a tech company" },
-  { id: "designer", label: "Product Designer", group: "Tech & Science", plain: "Designs how apps look and feel. Sketches, prototypes, lots of feedback.", tag: "UX/UI at a product startup" },
-  { id: "econ", label: "Economist", group: "Tech & Science", plain: "Studies how money, jobs, and markets work at the country level.", tag: "central bank / policy research" },
-  { id: "astro", label: "Astrophysicist", group: "Tech & Science", plain: "Studies stars, planets, and space using big telescopes and lots of data.", tag: "research astronomer at a university" },
-  { id: "doctor", label: "Doctor", group: "People & Impact", plain: "Diagnoses and treats patients. Years of training, high stakes, real lives.", tag: "hospital medicine, residency" },
-  { id: "law", label: "Corporate Lawyer", group: "People & Impact", plain: "Writes and negotiates contracts for big deals. Detail-obsessed and deadline-driven.", tag: "M&A practice, big firm" },
-  { id: "teacher", label: "Teacher", group: "People & Impact", plain: "Explains hard ideas so 30 kids get them. Endless energy required.", tag: "high school teacher, public school" },
-  { id: "journalist", label: "Journalist", group: "People & Impact", plain: "Digs up stories that matter. Interviews, writing, tight deadlines.", tag: "news reporter at a major outlet" },
-  { id: "director", label: "Film Director", group: "Creative", plain: "Turns a script into a movie. Leads a huge team through months of chaos.", tag: "narrative feature, mid-budget" },
-  { id: "architect", label: "Architect", group: "Creative", plain: "Designs buildings people will live and work in for decades.", tag: "design firm, urban projects" },
-  { id: "chef", label: "Chef", group: "Creative", plain: "Runs a professional kitchen. Physical, precise, unforgiving.", tag: "head chef, fine dining" },
+  // Finance & Markets
+  { id: "ib", label: "Investment Banker", group: "Business & Money", subgroup: "Finance & Markets", plain: "Helps big companies buy other companies. Long hours, high pay, lots of spreadsheets.", tag: "M&A analyst at a bulge bracket bank" },
+  { id: "quant", label: "Quant Trader", group: "Business & Money", subgroup: "Finance & Markets", plain: "Uses math and code to trade stocks and make (or lose) money fast.", tag: "prop desk, systematic strategies" },
+  { id: "trader", label: "Public Markets Trader", group: "Business & Money", subgroup: "Finance & Markets", plain: "Buys and sells stocks, bonds, or currencies all day. Fast decisions, real money.", tag: "sell-side trading desk" },
+  { id: "accountant", label: "Accountant", group: "Business & Money", subgroup: "Finance & Markets", plain: "Keeps a company's numbers honest and audited. Detail-heavy, deadline-driven.", tag: "Big Four audit / senior associate" },
+  { id: "actuary", label: "Actuary", group: "Business & Money", subgroup: "Finance & Markets", plain: "Uses statistics to price risk for insurance and pensions. Long exams, stable pay.", tag: "life / P&C insurer" },
+
+  // Strategy & Consulting
+  { id: "consult", label: "Management Consultant", group: "Business & Money", subgroup: "Strategy & Consulting", plain: "Companies hire you to solve their biggest problems. Lots of travel, slide decks, meetings.", tag: "MBB firm, client on-site" },
+  { id: "strategist", label: "Corporate Strategist", group: "Business & Money", subgroup: "Strategy & Consulting", plain: "Figures out where a company should place its next bet. Fewer clients, deeper dives.", tag: "in-house strategy team, Fortune 500" },
+
+  // Entrepreneurship & Product
+  { id: "founder", label: "Startup Founder", group: "Business & Money", subgroup: "Entrepreneurship & Product", plain: "Starts a company from scratch. High risk, high freedom, mostly chaos.", tag: "early-stage founder, pre-revenue" },
+  { id: "pm", label: "Product Manager", group: "Business & Money", subgroup: "Entrepreneurship & Product", plain: "Decides what an app or product should do next. Talks to everyone all day.", tag: "B2C app, growth stage" },
+  { id: "vc", label: "Venture Capitalist", group: "Business & Money", subgroup: "Entrepreneurship & Product", plain: "Picks which startups to fund. Half judgement, half hustle, long feedback loop.", tag: "early-stage VC firm" },
+  { id: "growth", label: "Growth Lead", group: "Business & Money", subgroup: "Entrepreneurship & Product", plain: "Runs experiments to make more users show up and stick. Half marketing, half data.", tag: "growth team at a scale-up" },
+
+  // Marketing & Brand
+  { id: "marketing", label: "Brand Marketer", group: "Business & Money", subgroup: "Marketing & Brand", plain: "Builds how people feel about a brand. Half creative, half data.", tag: "D2C brand, performance + creative" },
+  { id: "pr", label: "PR Lead", group: "Business & Money", subgroup: "Marketing & Brand", plain: "Shapes what the press and public say about a company. Crisis calls at 2am.", tag: "in-house comms, growth-stage" },
+  { id: "smm", label: "Social Media Manager", group: "Business & Money", subgroup: "Marketing & Brand", plain: "Runs a brand's voice on TikTok, IG, X. Trends move faster than approval chains.", tag: "consumer brand, always-on" },
+
+  // Software & Engineering
+  { id: "swe", label: "Software Engineer", group: "Tech & Science", subgroup: "Software & Engineering", plain: "Writes code to build apps, websites, or systems. Deep focus work.", tag: "product team at a scale-up" },
+  { id: "dataeng", label: "Data Engineer", group: "Tech & Science", subgroup: "Software & Engineering", plain: "Builds the pipes that move data from where it's made to where it's used.", tag: "platform team at a data-heavy company" },
+  { id: "secureng", label: "Security Engineer", group: "Tech & Science", subgroup: "Software & Engineering", plain: "Finds ways attackers could break in, then closes them. Paranoid by profession.", tag: "product security, mid-size tech" },
+
+  // Data, AI & Research
+  { id: "ml", label: "AI / ML Engineer", group: "Tech & Science", subgroup: "Data, AI & Research", plain: "Trains computers to learn from data — like the systems behind ChatGPT.", tag: "applied ML at a tech company" },
+  { id: "econ", label: "Economist", group: "Tech & Science", subgroup: "Data, AI & Research", plain: "Studies how money, jobs, and markets work at the country level.", tag: "central bank / policy research" },
+  { id: "astro", label: "Astrophysicist", group: "Tech & Science", subgroup: "Data, AI & Research", plain: "Studies stars, planets, and space using big telescopes and lots of data.", tag: "research astronomer at a university" },
+  { id: "datasci", label: "Data Scientist", group: "Tech & Science", subgroup: "Data, AI & Research", plain: "Turns messy data into decisions. Half statistician, half storyteller.", tag: "analytics team at a product company" },
+  { id: "researchsci", label: "Research Scientist", group: "Tech & Science", subgroup: "Data, AI & Research", plain: "Publishes new science. Grants, papers, and long payoffs.", tag: "R&D lab / university" },
+
+  // Design & Architecture
+  { id: "designer", label: "Product Designer", group: "Tech & Science", subgroup: "Design & Architecture", plain: "Designs how apps look and feel. Sketches, prototypes, lots of feedback.", tag: "UX/UI at a product startup" },
+  { id: "architect", label: "Architect", group: "Creative", subgroup: "Design & Architecture", plain: "Designs buildings people will live and work in for decades.", tag: "design firm, urban projects" },
+  { id: "indusdesign", label: "Industrial Designer", group: "Creative", subgroup: "Design & Architecture", plain: "Designs physical products — chairs, phones, cars. Form meets manufacturing.", tag: "consumer hardware studio" },
+  { id: "gamedesign", label: "Game Designer", group: "Creative", subgroup: "Design & Architecture", plain: "Designs how a game feels to play — rules, levels, moment-to-moment fun.", tag: "mid-size game studio" },
+
+  // Medicine & Health
+  { id: "doctor", label: "Doctor", group: "People & Impact", subgroup: "Medicine & Health", plain: "Diagnoses and treats patients. Years of training, high stakes, real lives.", tag: "hospital medicine, residency" },
+  { id: "nurse", label: "Nurse", group: "People & Impact", subgroup: "Medicine & Health", plain: "Front-line patient care. Long shifts on your feet, life-and-death moments.", tag: "hospital floor nurse" },
+  { id: "therapist", label: "Therapist", group: "People & Impact", subgroup: "Medicine & Health", plain: "Helps people work through hard things by talking. Deep listening as a job.", tag: "clinical psychologist, private practice" },
+  { id: "dentist", label: "Dentist", group: "People & Impact", subgroup: "Medicine & Health", plain: "Fixes teeth. Precise handwork, own your own practice, predictable hours.", tag: "private practice dentist" },
+  { id: "vet", label: "Veterinarian", group: "People & Impact", subgroup: "Medicine & Health", plain: "Doctor for animals. Ranges from puppies to livestock, emotional and physical.", tag: "small-animal clinic" },
+
+  // Law, Policy & Public Service
+  { id: "law", label: "Corporate Lawyer", group: "People & Impact", subgroup: "Law, Policy & Public Service", plain: "Writes and negotiates contracts for big deals. Detail-obsessed and deadline-driven.", tag: "M&A practice, big firm" },
+  { id: "policy", label: "Policy Analyst", group: "People & Impact", subgroup: "Law, Policy & Public Service", plain: "Researches how laws and rules should change. Slow-moving, high-leverage.", tag: "think tank / govt agency" },
+  { id: "diplomat", label: "Diplomat", group: "People & Impact", subgroup: "Law, Policy & Public Service", plain: "Represents a country abroad. Postings move every few years.", tag: "foreign service officer" },
+
+  // Media, Writing & Film
+  { id: "journalist", label: "Journalist", group: "People & Impact", subgroup: "Media, Writing & Film", plain: "Digs up stories that matter. Interviews, writing, tight deadlines.", tag: "news reporter at a major outlet" },
+  { id: "director", label: "Film Director", group: "Creative", subgroup: "Media, Writing & Film", plain: "Turns a script into a movie. Leads a huge team through months of chaos.", tag: "narrative feature, mid-budget" },
+  { id: "novelist", label: "Novelist", group: "Creative", subgroup: "Media, Writing & Film", plain: "Writes books. Mostly alone, mostly for years before anyone reads it.", tag: "working novelist, mid-list" },
+  { id: "musician", label: "Musician", group: "Creative", subgroup: "Media, Writing & Film", plain: "Makes music for a living. Craft + business + touring stamina.", tag: "independent recording artist" },
+  { id: "actor", label: "Actor", group: "Creative", subgroup: "Media, Writing & Film", plain: "Performs on stage or screen. Constant auditions, sparse steady work.", tag: "working actor, film + theatre" },
+  { id: "photographer", label: "Photographer", group: "Creative", subgroup: "Media, Writing & Film", plain: "Sees things others don't and captures them. Freelance rhythm.", tag: "editorial / commercial photographer" },
+
+  // Education & Coaching
+  { id: "teacher", label: "Teacher", group: "People & Impact", subgroup: "Education & Coaching", plain: "Explains hard ideas so 30 kids get them. Endless energy required.", tag: "high school teacher, public school" },
+  { id: "professor", label: "University Professor", group: "People & Impact", subgroup: "Education & Coaching", plain: "Teaches at university and does research. Long path, real autonomy after tenure.", tag: "tenure-track faculty" },
+  { id: "coach", label: "Coach", group: "People & Impact", subgroup: "Education & Coaching", plain: "Trains athletes or teams. Half tactician, half psychologist.", tag: "sport coach, competitive level" },
+
+  // Craft & Trades
+  { id: "chef", label: "Chef", group: "Creative", subgroup: "Craft & Trades", plain: "Runs a professional kitchen. Physical, precise, unforgiving.", tag: "head chef, fine dining" },
+  { id: "carpenter", label: "Carpenter", group: "Creative", subgroup: "Craft & Trades", plain: "Builds and finishes real things in wood. Hands, tools, visible results.", tag: "custom / finish carpentry" },
+  { id: "mechanic", label: "Mechanic", group: "Creative", subgroup: "Craft & Trades", plain: "Diagnoses and fixes what other people can't. Grease, tools, satisfaction.", tag: "auto shop / specialty vehicles" },
+  { id: "pilot", label: "Pilot", group: "Creative", subgroup: "Craft & Trades", plain: "Flies commercial aircraft. Precision under pressure, life on a schedule.", tag: "commercial airline pilot" },
 ];
 const CAREER_GROUPS = ["Business & Money", "Tech & Science", "People & Impact", "Creative"];
+const CAREER_SUBGROUPS = [
+  "Finance & Markets",
+  "Strategy & Consulting",
+  "Entrepreneurship & Product",
+  "Marketing & Brand",
+  "Software & Engineering",
+  "Data, AI & Research",
+  "Design & Architecture",
+  "Medicine & Health",
+  "Law, Policy & Public Service",
+  "Media, Writing & Film",
+  "Education & Coaching",
+  "Craft & Trades",
+];
+// One-line description of what draws someone to each subgroup — shown under the
+// subgroup's fit score on the report. Kept honest to the field, not flattering.
+const SUBGROUP_WHY = {
+  "Finance & Markets": "You're comfortable with numbers, risk, and high-stakes decisions where the scoreboard is money.",
+  "Strategy & Consulting": "You like structuring messy problems and being the outsider who tells a company what to do.",
+  "Entrepreneurship & Product": "You want ownership and would rather ship something imperfect than argue about it.",
+  "Marketing & Brand": "You care about how things feel to real people and can hold creative and analytical in the same head.",
+  "Software & Engineering": "You'd rather build a working system than talk about one, and you don't mind long stretches of quiet focus.",
+  "Data, AI & Research": "You want to understand things deeply and are patient enough for long feedback loops.",
+  "Design & Architecture": "You care how things look, feel, and work — and can hold shape, function, and constraint at once.",
+  "Medicine & Health": "You want to help people in a concrete, physical way and can hold responsibility under pressure.",
+  "Law, Policy & Public Service": "You care about rules and their consequences, and can argue precisely without losing the plot.",
+  "Media, Writing & Film": "You have a point of view and want it to reach people — through words, images, or moving pictures.",
+  "Education & Coaching": "You get real satisfaction from someone else getting better because of you.",
+  "Craft & Trades": "You'd rather make something real with your hands than move ideas around on a screen.",
+};
 const SIM_READY = new Set(["ib", "swe", "doctor", "founder", "marketing", "teacher", "ml", "law", "chef", "consult", "architect", "econ", "quant", "journalist", "director", "designer", "pm", "astro"]);
 
 const INTERESTS_QUIZ = {
@@ -136,7 +220,10 @@ const QUIZ_TAGS = {
   strengths: [
     { logic: 2 }, { writing: 2 }, { speaking: 2 }, { creativity: 2 },
     { focus: 2 }, { leadership: 2 }, { empathy: 2 }, { hands: 2 },
-    { logic: 1, writing: 1 }, { speaking: 2 },
+    // Q8: "spotting the flaw in someone's argument" — pure logic, no writing.
+    // Was mis-tagged as {logic:1, writing:1} which double-counted argument
+    // critique into writing scores.
+    { logic: 2 }, { speaking: 2 },
   ],
   weaknesses: [
     { procrastination: 2 }, { focus_bad: 2 }, { conflict_avoid: 2 },
@@ -182,6 +269,7 @@ const CAREER_FIT = {
     ["values","freedom",1,3],["values","growth",1,3],["values","creativity_val",1,1],
     ["values","stability",-1,4],["values","balance",-1,3],
     ["weaknesses","conflict_avoid",-1,2],["weaknesses","perfectionism",-1,1],
+    ["weaknesses","social_drain",-1,2],
     ["workstyle","flexible",1,2],["workstyle","fast",1,2],["workstyle","risk",1,3],
     ["workstyle","generalist",1,2],["workstyle","front",1,1],
   ],
@@ -196,6 +284,7 @@ const CAREER_FIT = {
     ["interests","creative",1,3],["interests","social",1,2],["interests","analytical",1,1],
     ["strengths","writing",1,3],["strengths","creativity",1,3],["strengths","empathy",1,1],
     ["values","creativity_val",1,3],["values","growth",1,1],
+    ["weaknesses","social_drain",-1,2],
     ["workstyle","team",1,1],["workstyle","flexible",1,1],["workstyle","fast",1,2],
   ],
   swe: [
@@ -238,6 +327,7 @@ const CAREER_FIT = {
     ["values","stability",1,2],["values","impact",1,3],["values","prestige",1,2],
     ["values","balance",-1,3],
     ["weaknesses","procrastination",-1,3],["weaknesses","detail_bad",-1,3],["weaknesses","boredom",-1,1],
+    ["weaknesses","social_drain",-1,3],
     ["workstyle","structured",1,2],["workstyle","careful",1,2],["workstyle","detail",1,2],["workstyle","team",1,1],
   ],
   law: [
@@ -436,40 +526,338 @@ function topKeys(obj, n = 3) {
 
 function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
 
-function generateHeadline(dims) {
-  const ti = topKeys(dims.interests, 1)[0];
-  const tv = topKeys(dims.values, 1)[0];
-  const iMap = {
-    analytical: "a sharp analytical thinker",
-    creative: "a creative maker",
-    social: "a natural connector",
-    practical: "a hands-on doer",
-    entrepreneurial: "a bold starter",
-    investigative: "a deep researcher",
-  };
-  const vMap = {
-    money: "who wants real financial rewards.",
-    impact: "who wants to change something that matters.",
-    freedom: "who needs freedom over routine.",
-    prestige: "who plays to win at a high level.",
-    stability: "who values a steady, safe path.",
-    growth: "who never stops learning.",
-    balance: "who wants a real life outside work.",
-    creativity_val: "who has to make things to feel alive.",
-  };
-  return `You're ${iMap[ti] || "a thoughtful student"} ${vMap[tv] || "figuring out what matters."}`;
+// Fine-grained band label for a 0-100 dim score. Adjacent bands read
+// distinctly so two users with 65 vs 75 in the same dim get different copy.
+function scoreBand(n) {
+  if (n >= 88) return "off-the-charts";
+  if (n >= 80) return "very high";
+  if (n >= 72) return "unusually high";
+  if (n >= 64) return "clearly above average";
+  if (n >= 56) return "solidly above middle";
+  if (n >= 48) return "middling";
+  if (n >= 40) return "on the low side";
+  return "low";
 }
 
+// Score-aware sentence fragment for a dim. Uses the actual number.
+function dimPhrase(label, score) {
+  return `${label} (${score})`;
+}
+
+// ============================================================
+// PHRASE BANKS — for combinatorial mad-libs. Each dim has 4 alternate
+// phrasings for INTEREST_PHRASE (noun-phrase pull), STRENGTH_PHRASE
+// (noun-phrase capability), and VALUE_CLAUSE (a sentence-fitting tail
+// clause). Selection is deterministic on the user's actual scores, so
+// a 3-point difference in one dim reliably swings to a different
+// phrase across many slots. The total unique output space is huge.
+// ============================================================
+const INTEREST_PHRASE = {
+  analytical: ["systems and patterns", "problems that need a proof", "the mechanism underneath things", "how the parts connect"],
+  creative: ["making something out of nothing", "getting ideas onto a page", "the craft of building things people feel", "creative work you own"],
+  social: ["reading a room and responding", "the messy pull of other people", "understanding what someone actually needs", "conversations that go somewhere"],
+  practical: ["shipping something you can touch", "hands-on work with real outcomes", "building things that end the day existing", "concrete artifacts, not slide decks"],
+  entrepreneurial: ["starting new things from zero", "owning the outcome, good or bad", "making a small bet that could grow", "building something that didn't exist yesterday"],
+  investigative: ["deep questions with slow answers", "getting to the bottom of things", "long-form curiosity", "the 'but why' problem people give up on"],
+};
+const STRENGTH_PHRASE = {
+  logic: ["sharp logic", "clear reasoning under pressure", "structured thinking", "analytical rigor"],
+  writing: ["disciplined writing", "clarity on the page", "written craft", "the ability to turn thought into prose"],
+  speaking: ["real presence in a room", "spoken clarity", "voice that carries", "on-your-feet articulation"],
+  creativity: ["generative range", "inventive instinct", "the ability to see what isn't there yet", "creative jump"],
+  focus: ["long deep focus", "the endurance to sit with a problem", "concentration that outlasts the room", "focus most people your age don't have"],
+  leadership: ["a natural pull-others-along instinct", "leadership range", "the ability to be trusted with the room", "authority without loudness"],
+  empathy: ["real emotional attunement", "the ability to read subtle cues", "sensitivity that shows up as a skill", "sharp people-reading"],
+  hands: ["hands-on skill", "tactile intelligence", "the ability to build a thing that works", "practical craft"],
+};
+const VALUE_CLAUSE = {
+  money: [
+    "and money is on the list, honestly and openly",
+    "and you want real financial upside — no need to pretend otherwise",
+    "and the paycheck matters in a way you're not going to hide from",
+    "and you're clear-eyed about wanting to be paid well",
+  ],
+  impact: [
+    "and you want the day to matter for someone else",
+    "and you want work that actually changes something",
+    "and impact isn't optional for you",
+    "and you'd rather leave a real dent than a big paycheck",
+  ],
+  freedom: [
+    "and autonomy isn't a bonus — it's a filter",
+    "and owning your calendar matters more than owning a title",
+    "and you want to be your own boss on a random Tuesday",
+    "and freedom over your day is non-negotiable",
+  ],
+  prestige: [
+    "and you want the field to know your name",
+    "and being genuinely respected in a real community matters",
+    "and you want to be near the top of whatever you pick",
+    "and status inside a serious field is honestly on the list",
+  ],
+  stability: [
+    "and you want ground that feels solid, not a lottery ticket",
+    "and predictability is a real filter for you",
+    "and a paycheck you can count on matters more than upside",
+    "and you want the base of your life to be steady",
+  ],
+  growth: [
+    "and you measure a job by what you're becoming, not just what you're earning",
+    "and staying still would feel like moving backwards",
+    "and you want to be sharper every year",
+    "and you'd take the harder learning curve over the easier plateau",
+  ],
+  balance: [
+    "and your life outside work is louder than most people your age would admit",
+    "and evenings and weekends matter — not as recovery, as the point",
+    "and you're not willing to trade the whole 20s away",
+    "and a real life next to the job isn't optional",
+  ],
+  creativity_val: [
+    "and you have to make things that are yours",
+    "and shipping your own work is core to who you are",
+    "and you'd rather build than manage what others built",
+    "and being the maker matters more than being the manager",
+  ],
+};
+const WEAKNESS_PHRASE = {
+  procrastination: ["putting things off until they're urgent", "leaving hard things until the last minute", "delaying the start", "avoiding the first move"],
+  focus_bad: ["losing focus fast", "attention that skitters", "difficulty staying with one thing", "the pull to check something else"],
+  conflict_avoid: ["ducking hard conversations", "smoothing over instead of naming things", "avoiding the direct ask", "swallowing what you should say"],
+  boredom: ["quitting when it stops being new", "a low tolerance for repetition", "the itch when things settle down", "restlessness with the same thing"],
+  perfectionism: ["holding onto something until it's perfect", "the trap of one more revision", "not shipping until every corner is right", "quiet fear of releasing something imperfect"],
+  detail_bad: ["missing small details", "letting little things slip past", "the last 10% that gets away", "precision that fades under fatigue"],
+  social_drain: ["needing recovery time after people", "the tank running low after a full day of humans", "social bandwidth that empties fast", "energy that peoples' attention costs"],
+};
+
+// Deterministic seed drawn from actual dim scores. Two profiles with even
+// small score differences produce different seeds and land on different
+// slots below.
+function profileSeed(dims) {
+  let n = 17;
+  for (const cat of ["interests","strengths","values","weaknesses"]) {
+    const obj = dims[cat] || {};
+    for (const [k, v] of Object.entries(obj).sort()) {
+      // ASCII sum keeps the seed stable across runs and browsers
+      let ks = 0; for (let i = 0; i < k.length; i++) ks = (ks * 31 + k.charCodeAt(i)) & 0x7fffffff;
+      n = (n * 131 + ks * (v|0)) & 0x7fffffff;
+    }
+  }
+  return n;
+}
+
+// Pick from a pool with a per-slot salt so different slots on the same
+// user pick independently — otherwise every slot would rotate together.
+function pickSlot(pool, seed, salt) {
+  if (!pool || !pool.length) return null;
+  return pool[((seed ^ (salt * 2654435761)) >>> 0) % pool.length];
+}
+
+// Wrap a phrase-bank lookup with fallback to the plain DIM_LABELS name.
+function phraseFor(bank, key, seed, salt) {
+  const pool = bank[key];
+  if (!pool) return null;
+  return pickSlot(pool, seed, salt);
+}
+
+// 10 headline skeletons × 4 variants per dim slot = tens of thousands of
+// distinct outputs. Selected deterministically by the profile seed so the
+// same user always gets the same headline, and two users with even a small
+// score difference land on different slots.
+const REPORT_HEADLINE_TEMPLATES = [
+  ({iP, sP, vC, iN, sN}) => `You're pulled toward ${iP} (${iN}), backed by ${sP} (${sN}) — ${vC}.`,
+  ({iP, sP, vC, iN, sN}) => `Your ${sP} (${sN}) meets a real interest in ${iP} (${iN}) — ${vC}.`,
+  ({iP, sP, vC, iN, sN}) => `The clearest signal in your quizzes: ${sP} at ${sN}, and a pull toward ${iP} at ${iN}. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `${cap(iP)} runs your engine — you scored ${iN} there — and your ${sP} (${sN}) is what will make it work. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `Between your pull toward ${iP} (${iN}) and your ${sP} (${sN}), the shape of your career is already visible — ${vC}.`,
+  ({iP, sP, vC, iN, sN}) => `Two numbers tell your story: ${iP} at ${iN}, and ${sP} at ${sN}. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `You're built for work involving ${iP} (${iN}) — your ${sP} (${sN}) makes it more than a preference, it's leverage. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `Your ${iP} pull scored ${iN}, and your ${sP} scored ${sN} — the interest is real AND you have the raw material to act on it. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `${cap(sP)} (${sN}) plus ${iP} (${iN}) — that pair puts you on a shortlist most Grade 10 profiles don't reach. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `Read your quizzes together and one line falls out: ${iP} (${iN}) as the interest, ${sP} (${sN}) as the strength, ${vC.replace(/^and /, "")} as the aim.`,
+];
+
+// Headline variants for when only interest OR only strength or only value cleared.
+const HEADLINE_PARTIAL_INTEREST = [
+  ({iP, iN}) => `Your one strong signal is a pull toward ${iP} — it scored ${iN}, and nothing else in your profile is close.`,
+  ({iP, iN}) => `${cap(iP)} (${iN}) is the loudest thing in your quizzes — the rest of the profile is quiet, so start there.`,
+  ({iP, iN}) => `You lean toward ${iP} (${iN}) — a real signal, though the strengths to back it haven't yet shown up.`,
+  ({iP, iN}) => `The interest is clear: ${iP} at ${iN}. What's less clear is the strength to power it — that's the next thing to test.`,
+];
+const HEADLINE_PARTIAL_STRENGTH = [
+  ({sP, sN}) => `Your one clear strength is ${sP} at ${sN} — start from the strength, work backward to which fields pay best for it.`,
+  ({sP, sN}) => `${cap(sP)} scored ${sN} — everything else clustered near the middle, so pick a field that pays for this and figure out fit from there.`,
+  ({sP, sN}) => `The number that stands out: ${sP} at ${sN}. Interests will follow the strength if you let them.`,
+  ({sP, sN}) => `You've got real ${sP} (${sN}) but the interests haven't sharpened — that's normal, and the strength gives you time to explore.`,
+];
+const HEADLINE_PARTIAL_VALUE = [
+  ({vC, vN}) => `Your quizzes didn't strongly sort your interests or strengths — but your top value scored ${vN}, ${vC}. Start the search from that.`,
+  ({vC, vN}) => `The only thing that punched above the middle was the value: ${vN}. ${cap(vC)}. That's a filter, not a job description — but it's a real one.`,
+];
+
+function generateHeadline(dims) {
+  const iEntries = Object.entries(dims.interests || {}).sort((a,b) => b[1] - a[1]);
+  const sEntries = Object.entries(dims.strengths || {}).sort((a,b) => b[1] - a[1]);
+  const vEntries = Object.entries(dims.values || {}).sort((a,b) => b[1] - a[1]);
+  const [ti, ts] = [iEntries[0], sEntries[0]];
+  const [tv] = [vEntries[0]];
+
+  const iStrong = ti && ti[1] >= 55;
+  const sStrong = ts && ts[1] >= 55;
+  const vStrong = tv && tv[1] >= 55;
+
+  if (!iStrong && !sStrong && !vStrong) {
+    return "Your scores clustered near the middle across almost every dimension — a real signal in itself. It usually means you haven't yet had the experiences that force preferences to sharpen. Try things wildly different from each other — the contrast is what teaches you.";
+  }
+
+  const seed = profileSeed(dims);
+  const slot = { iN: ti?.[1]||0, sN: ts?.[1]||0, vN: tv?.[1]||0 };
+  slot.iP = iStrong ? phraseFor(INTEREST_PHRASE, ti[0], seed, 11) : null;
+  slot.sP = sStrong ? phraseFor(STRENGTH_PHRASE, ts[0], seed, 23) : null;
+  slot.vC = vStrong ? phraseFor(VALUE_CLAUSE, tv[0], seed, 41) : null;
+
+  if (iStrong && sStrong && vStrong) {
+    const tpl = pickSlot(REPORT_HEADLINE_TEMPLATES, seed, 7);
+    return tpl(slot);
+  }
+  if (iStrong) return pickSlot(HEADLINE_PARTIAL_INTEREST, seed, 13)(slot);
+  if (sStrong) return pickSlot(HEADLINE_PARTIAL_STRENGTH, seed, 17)(slot);
+  return pickSlot(HEADLINE_PARTIAL_VALUE, seed, 19)(slot);
+}
+
+// Sentence pools for the profile paragraph. Each pool has 5-6 variants so
+// two users with the same dim ordering pick different sentences based on
+// their exact score seed.
+const PROFILE_INTEREST_SPLIT = [
+  ({i1P, i1N, i2P, i2N}) => `Your interests split roughly evenly between ${i1P} (${i1N}) and ${i2P} (${i2N}) — that's a real duality, not indecision.`,
+  ({i1P, i1N, i2P, i2N}) => `You're pulled in two directions at once: ${i1P} (${i1N}) and ${i2P} (${i2N}). Careers that touch both feel most natural.`,
+  ({i1P, i1N, i2P, i2N}) => `The interest quiz sorted you into two clusters — ${i1P} (${i1N}) and ${i2P} (${i2N}) — barely apart. Don't force yourself to pick one yet.`,
+  ({i1P, i1N, i2P, i2N}) => `Two interests punched above the middle together: ${i1P} at ${i1N}, and ${i2P} right behind at ${i2N}. That combination narrows the field usefully.`,
+  ({i1P, i1N, i2P, i2N}) => `You're a genuine hybrid — ${i1P} (${i1N}) and ${i2P} (${i2N}) both showed up strong, which is rarer than it looks at your age.`,
+];
+const PROFILE_INTEREST_SOLO = [
+  ({iP, iN}) => `${cap(iP)} is your strongest interest at ${iN} — ${scoreBand(iN)} for a Grade 10 profile.`,
+  ({iP, iN}) => `The interest that pulled ahead was ${iP} at ${iN}. Everything else scored well below.`,
+  ({iP, iN}) => `${cap(iP)} scored ${iN} — the clearest lane your quizzes pointed to.`,
+  ({iP, iN}) => `One interest carried the day: ${iP} at ${iN}. That's the direction to test first.`,
+  ({iP, iN}) => `The score to notice: ${iP} at ${iN} — ${scoreBand(iN)}, and nothing else in the interest quiz is close.`,
+];
+const PROFILE_STRENGTH_DUO = [
+  ({s1P, s1N, s2P, s2N}) => `Your ${s1P} (${s1N}) is where you have most leverage; ${s2P} at ${s2N} is the reliable second gear.`,
+  ({s1P, s1N, s2P, s2N}) => `Two strengths anchor the profile: ${s1P} (${s1N}) as the primary, and ${s2P} (${s2N}) as backup. Careers that reward both compound fast.`,
+  ({s1P, s1N, s2P, s2N}) => `You're strongest at ${s1P} (${s1N}), with ${s2P} (${s2N}) right behind — the pair is worth more than the sum of the parts.`,
+  ({s1P, s1N, s2P, s2N}) => `The strength picture: ${s1P} at ${s1N}, then ${s2P} at ${s2N}. Look for roles that need both, not just one.`,
+  ({s1P, s1N, s2P, s2N}) => `Your ${s1P} scored ${s1N} and your ${s2P} scored ${s2N} — that combo is what will separate you from people with the same interests.`,
+];
+const PROFILE_STRENGTH_SOLO = [
+  ({sP, sN}) => `Your one clear strength is ${sP} at ${sN} — everything else scored below 55, so this is what you build around first.`,
+  ({sP, sN}) => `${cap(sP)} at ${sN} is the only strength that punched above the middle. That narrows the "start here" list nicely.`,
+  ({sP, sN}) => `The strengths quiz gave one clear answer: ${sP} (${sN}). Everything else is background.`,
+  ({sP, sN}) => `You have real ${sP} (${sN}) but the other strength dimensions are quiet — this is the one to lean on now.`,
+];
+const PROFILE_VALUE_DUO = [
+  ({v1P, v1N, v2P, v2N}) => `You want ${v1P} (${v1N}) and ${v2P} (${v2N}) — both scored high enough that trading one away will feel wrong even when the offer is good.`,
+  ({v1P, v1N, v2P, v2N}) => `Two values matter roughly equally: ${v1P} (${v1N}) and ${v2P} (${v2N}). That's a filter, not a personality quirk.`,
+  ({v1P, v1N, v2P, v2N}) => `You'll want ${v1P} (${v1N}) AND ${v2P} (${v2N}) at once. That combo shortens the shortlist significantly.`,
+  ({v1P, v1N, v2P, v2N}) => `${cap(v1P)} scored ${v1N} and ${v2P} scored ${v2N} — both are real, and pretending only one matters would be dishonest.`,
+];
+const PROFILE_VALUE_SOLO = [
+  ({vP, vN}) => `What you actually want is ${vP} — it topped the values quiz at ${vN}, well ahead of everything else.`,
+  ({vP, vN}) => `One value dominated: ${vP} at ${vN}. That should be the primary filter on any career shortlist.`,
+  ({vP, vN}) => `The values quiz was clear: ${vP} at ${vN} is what you want out of work.`,
+  ({vP, vN}) => `${cap(vP)} scored ${vN} — the loudest thing the values quiz said about you.`,
+];
+const PROFILE_WEAKNESS_HIGH = [
+  ({wP, wN}) => `The friction to watch is ${wP} at ${wN} — high enough that it will bite you if you pick a career where it's central to the job.`,
+  ({wP, wN}) => `${cap(wP)} scored ${wN} — that's the one to plan around, not deny.`,
+  ({wP, wN}) => `Real friction shows up in ${wP} (${wN}). Careers that fight this every day will drain you fast.`,
+  ({wP, wN}) => `Your biggest structural risk: ${wP} at ${wN}. Not fatal, but factor it in when picking a field.`,
+];
+const PROFILE_WEAKNESS_MID = [
+  ({wP, wN}) => `${cap(wP)} scored ${wN} — real but manageable if you know it's there.`,
+  ({wP, wN}) => `A mid-level watch-out: ${wP} at ${wN}. Fine most days, sharp under real pressure.`,
+  ({wP, wN}) => `${cap(wP)} sits at ${wN} — the kind of thing that costs you occasionally but doesn't define you.`,
+];
+
 function generateProfile(dims) {
-  const ti = topKeys(dims.interests, 2);
-  const ts = topKeys(dims.strengths, 2);
-  const tv = topKeys(dims.values, 2);
-  const tw = topKeys(dims.weaknesses, 1)[0];
+  const FLOOR = 55;
+  const takeAll = (obj) => Object.entries(obj || {}).sort((a,b) => b[1] - a[1]);
+  const iAll = takeAll(dims.interests);
+  const sAll = takeAll(dims.strengths);
+  const vAll = takeAll(dims.values);
+  const wAll = takeAll(dims.weaknesses);
+  const seed = profileSeed(dims);
+
   const parts = [];
-  if (ti[0]) parts.push(`You come alive around ${DIM_LABELS.interests[ti[0]]}${ti[1] ? ` and ${DIM_LABELS.interests[ti[1]]}` : ""}.`);
-  if (ts[0]) parts.push(`Your biggest strengths are ${DIM_LABELS.strengths[ts[0]]}${ts[1] ? ` and ${DIM_LABELS.strengths[ts[1]]}` : ""}.`);
-  if (tv[0]) parts.push(`What matters most to you: ${DIM_LABELS.values[tv[0]]}${tv[1] ? ` and ${DIM_LABELS.values[tv[1]]}` : ""}.`);
-  if (tw && dims.weaknesses[tw] >= 50) parts.push(`Watch out: you can get stuck on ${DIM_LABELS.weaknesses[tw]}.`);
+
+  // ---- Interest sentence
+  const iStrong = iAll.filter(([_, v]) => v >= FLOOR);
+  if (iStrong.length >= 2 && (iStrong[0][1] - iStrong[1][1]) <= 12) {
+    const slot = {
+      i1P: phraseFor(INTEREST_PHRASE, iStrong[0][0], seed, 3) || DIM_LABELS.interests[iStrong[0][0]],
+      i1N: iStrong[0][1],
+      i2P: phraseFor(INTEREST_PHRASE, iStrong[1][0], seed, 5) || DIM_LABELS.interests[iStrong[1][0]],
+      i2N: iStrong[1][1],
+    };
+    parts.push(pickSlot(PROFILE_INTEREST_SPLIT, seed, 3)(slot));
+  } else if (iStrong.length >= 1) {
+    const slot = {
+      iP: phraseFor(INTEREST_PHRASE, iStrong[0][0], seed, 3) || DIM_LABELS.interests[iStrong[0][0]],
+      iN: iStrong[0][1],
+    };
+    parts.push(pickSlot(PROFILE_INTEREST_SOLO, seed, 4)(slot));
+  }
+
+  // ---- Strength sentence
+  const sStrong = sAll.filter(([_, v]) => v >= FLOOR);
+  if (sStrong.length >= 2) {
+    const slot = {
+      s1P: phraseFor(STRENGTH_PHRASE, sStrong[0][0], seed, 7) || DIM_LABELS.strengths[sStrong[0][0]],
+      s1N: sStrong[0][1],
+      s2P: phraseFor(STRENGTH_PHRASE, sStrong[1][0], seed, 11) || DIM_LABELS.strengths[sStrong[1][0]],
+      s2N: sStrong[1][1],
+    };
+    parts.push(pickSlot(PROFILE_STRENGTH_DUO, seed, 8)(slot));
+  } else if (sStrong.length === 1) {
+    const slot = {
+      sP: phraseFor(STRENGTH_PHRASE, sStrong[0][0], seed, 7) || DIM_LABELS.strengths[sStrong[0][0]],
+      sN: sStrong[0][1],
+    };
+    parts.push(pickSlot(PROFILE_STRENGTH_SOLO, seed, 9)(slot));
+  }
+
+  // ---- Value sentence
+  const vStrong = vAll.filter(([_, v]) => v >= FLOOR);
+  if (vStrong.length >= 2 && (vStrong[0][1] - vStrong[1][1]) <= 12) {
+    const slot = {
+      v1P: DIM_LABELS.values[vStrong[0][0]], v1N: vStrong[0][1],
+      v2P: DIM_LABELS.values[vStrong[1][0]], v2N: vStrong[1][1],
+    };
+    parts.push(pickSlot(PROFILE_VALUE_DUO, seed, 13)(slot));
+  } else if (vStrong.length >= 1) {
+    const slot = {
+      vP: DIM_LABELS.values[vStrong[0][0]], vN: vStrong[0][1],
+    };
+    parts.push(pickSlot(PROFILE_VALUE_SOLO, seed, 14)(slot));
+  }
+
+  // ---- Weakness sentence
+  const wTop = wAll[0];
+  if (wTop && wTop[1] >= 60) {
+    const slot = {
+      wP: phraseFor(WEAKNESS_PHRASE, wTop[0], seed, 17) || DIM_LABELS.weaknesses[wTop[0]],
+      wN: wTop[1],
+    };
+    parts.push(pickSlot(PROFILE_WEAKNESS_HIGH, seed, 18)(slot));
+  } else if (wTop && wTop[1] >= 50) {
+    const slot = {
+      wP: phraseFor(WEAKNESS_PHRASE, wTop[0], seed, 17) || DIM_LABELS.weaknesses[wTop[0]],
+      wN: wTop[1],
+    };
+    parts.push(pickSlot(PROFILE_WEAKNESS_MID, seed, 19)(slot));
+  }
+
+  if (!parts.length) return "Your answers didn't clearly separate any interest, strength, or value — either you're genuinely balanced or picked the middle option a lot. Retake the quizzes and lean toward the ends of the scale where you can.";
   return parts.join(" ");
 }
 
@@ -515,22 +903,29 @@ function whyAvoid(careerId, dims) {
 }
 
 function getTopFields(scoredCareers) {
-  const groups = {};
+  // Only playable (sim-ready) careers count toward a subgroup's average — locked
+  // entries have no CAREER_FIT so they'd all default to 50 and drag things toward
+  // the mean. Subgroups with no playable careers are dropped entirely.
+  const subs = {};
   for (const c of scoredCareers) {
-    if (!groups[c.group]) groups[c.group] = { total: 0, count: 0 };
-    groups[c.group].total += c.fit;
-    groups[c.group].count += 1;
+    if (!SIM_READY.has(c.id)) continue;
+    const key = c.subgroup || c.group;
+    if (!subs[key]) subs[key] = { total: 0, count: 0 };
+    subs[key].total += c.fit;
+    subs[key].count += 1;
   }
-  const arr = Object.entries(groups).map(([g, { total, count }]) => ({
-    field: FIELD_MAP[g] || g, fit: Math.round(total / count), group: g,
-  })).sort((a, b) => b.fit - a.fit);
-  const why = {
-    "Business & Money": "You lean toward analytical, high-stakes work with real financial rewards.",
-    "Tech & Science": "You like going deep, thinking systematically, and building things that matter.",
-    "People & Impact": "You care about others and want your work to change real lives.",
-    "Creative": "You need to make things — words, images, ideas — that are truly yours.",
-  };
-  return arr.slice(0, 4).map(x => ({ field: x.field, fit: x.fit, why: why[x.group] || "Aligns with your profile." }));
+  const arr = Object.entries(subs)
+    .map(([sub, { total, count }]) => ({ field: sub, fit: Math.round(total / count) }))
+    .sort((a, b) => b.fit - a.fit);
+  // Cap at 3 AND require fit ≥ 55 so weak subgroups drop off — the old code
+  // sliced 4 out of exactly 4, so every group always showed regardless of fit.
+  const kept = arr.filter(x => x.fit >= 55).slice(0, 3);
+  const out = kept.length ? kept : arr.slice(0, 1);
+  return out.map(x => ({
+    field: x.field,
+    fit: x.fit,
+    why: SUBGROUP_WHY[x.field] || "Aligns with your profile.",
+  }));
 }
 
 function generatePlan(scoredCareers, dims) {
@@ -556,7 +951,10 @@ function generatePlan(scoredCareers, dims) {
     chef: "Work in a real kitchen for a week (even a small café) during vacation. See if the pace suits you.",
   }[top.id] || "Find someone who works in your top field and ask for 15 minutes of their time — just one honest conversation.";
 
-  const dominantValue = topKeys(dims.values, 1)[0];
+  // Only use a value-specific plan when the top value clears 55 — otherwise
+  // the "based on your top value" copy is dishonest for flat profiles.
+  const dvKey = topKeys(dims.values, 1)[0];
+  const dominantValue = (dvKey && (dims.values[dvKey] || 0) >= 55) ? dvKey : null;
   const valuePlan = {
     money: "Look up how much the top 10% in your target field actually earn — locally and globally. Make sure you're chasing it for the right reasons.",
     impact: "Volunteer 4 hours a week with an org whose mission you care about. See if the day-to-day work matches the mission.",
@@ -4275,7 +4673,11 @@ function buildDayRead({ good, bad, neutral, total, goodRatio, badRatio, belowRan
 
 function buildLocalReport() {
   const dims = scoreDimensions();
-  const scored = CAREERS.map(c => ({ ...c, fit: fitCareer(c.id, dims) })).sort((a, b) => b.fit - a.fit);
+  // Locked careers (no sim yet, no CAREER_FIT tuning) score a flat 50 — exclude
+  // them from every ranking, otherwise they pollute "actual jobs" and "avoid".
+  const scored = CAREERS.filter(c => SIM_READY.has(c.id))
+    .map(c => ({ ...c, fit: fitCareer(c.id, dims) }))
+    .sort((a, b) => b.fit - a.fit);
   const avoid = scored.filter(c => c.fit < 55).slice(-3).reverse();
 
   const enrichedTop = scored.slice(0, 5).map(c => {
@@ -4286,6 +4688,7 @@ function buildLocalReport() {
     return {
       career: c.label,
       group: c.group,
+      subgroup: c.subgroup || c.group,
       fit: c.fit,
       why: whyCareerFits(c.id, dims),
       reality: ins.reality,
@@ -4494,32 +4897,143 @@ function workstyleTakeaway(picks) {
 }
 
 // A short, distinctive 2-line "signature" — what makes this student specific
+// Signature — 1-2 sentence "who this person is at their core" line.
+// Composed from slot pools so two users with the same top interest but
+// different secondary strengths (or different exact scores) diverge.
+const SIG_INTEREST_STRENGTH = [
+  ({iP, iN, sP, sN, s2P, s2N}) => `Your pull toward ${iP} (${iN}) runs on ${sP} (${sN})${s2P ? `, backed by ${s2P} at ${s2N}` : ""} — that's the engine to build a career around.`,
+  ({iP, iN, sP, sN, s2P, s2N}) => `${cap(iP)} (${iN}) is the pull; ${sP} (${sN}) is what makes it more than a preference${s2P ? `, and ${s2P} at ${s2N} keeps it durable` : ""}.`,
+  ({iP, iN, sP, sN, s2P, s2N}) => `You're wired for ${iP} (${iN}) and you have the ${sP} (${sN}) to actually do it${s2P ? ` — ${s2P} at ${s2N} is the safety net` : ""}.`,
+  ({iP, iN, sP, sN, s2P, s2N}) => `Two numbers point in the same direction: ${iP} at ${iN} (interest) and ${sP} at ${sN} (strength)${s2P ? `, with ${s2P} (${s2N}) as a second strength that fits` : ""}.`,
+  ({iP, iN, sP, sN, s2P, s2N}) => `The pattern is clear: ${iP} (${iN}) is where your attention wants to go, and ${sP} (${sN}) is what you're actually good at when it gets there${s2P ? `. ${cap(s2P)} at ${s2N} adds range.` : "."}`,
+  ({iP, iN, sP, sN, s2P, s2N}) => `You're the ${iP}-plus-${sP} shape — ${iN} on the interest, ${sN} on the strength${s2P ? `, and ${s2P} at ${s2N} rounds it out` : ""}. That combination is rarer than you'd think.`,
+];
+const SIG_INTEREST_ONLY = [
+  ({iP, iN}) => `You're drawn to ${iP} (${iN}) — the interest is real, but the strengths to power it haven't yet cleared the middle.`,
+  ({iP, iN}) => `Your ${iP} pull scored ${iN}. What's missing is the strength to convert it — that's your next thing to build.`,
+  ({iP, iN}) => `${cap(iP)} (${iN}) is loud in your quizzes; the strengths quiz was quieter. The interest is the compass; you need to sharpen a strength to move.`,
+];
+const SIG_STRENGTH_ONLY = [
+  ({sP, sN}) => `Your one clear strength is ${sP} at ${sN} — start from the strength, work backward to which fields pay best for it.`,
+  ({sP, sN}) => `${cap(sP)} scored ${sN} — that's the leverage. The interest side hasn't sharpened yet, but the strength buys you time to explore.`,
+  ({sP, sN}) => `You've got real ${sP} (${sN}). The question isn't whether it's useful — it's which field pays most for exactly this.`,
+];
+const SIG_NEUTRAL = [
+  "Nothing in your scores punched above the middle yet — that's real signal, not a bug. It usually means you haven't had the experiences that force preferences to sharpen.",
+  "Your scores landed near the middle across the board. That's more common than you'd think at your age, and it's a real signal to go try wildly different things.",
+  "The quizzes didn't sort you into a strong lane. Two paths: retake them and lean toward the ends of each scale, or use the sim to force yourself into decisions and see what surfaces.",
+];
+
+// Value tail — 4 skeleton variants per value key so users with the same
+// top value but different scores get different sentences.
+const SIG_VALUE_TAIL = {
+  money: [
+    (n) => `Money matters (${n}) — not the only thing, but on the list and honestly there.`,
+    (n) => `You're clear that the paycheck matters (${n}) — no need to pretend otherwise.`,
+    (n) => `Financial upside scored ${n} — treat that as a filter, not a dirty secret.`,
+    (n) => `Getting paid well is on your list (${n}). The careers that do it best demand specific tradeoffs; you're ready for them.`,
+  ],
+  impact: [
+    (n) => `Impact scored ${n} — you want the day to matter for someone else.`,
+    (n) => `You want work that changes something (${n}). A lot of high-paying jobs will feel hollow to you; skip them.`,
+    (n) => `Meaning outranked money on your list (${n}) — that clarifies which fields are actually candidates.`,
+    (n) => `Real-world impact hit ${n} — the compass will point away from careers that only pay well.`,
+  ],
+  freedom: [
+    (n) => `Autonomy over your day scored ${n} — that filters out about 80% of first jobs on its own.`,
+    (n) => `Freedom hit ${n} — you'll be miserable in any job that treats your calendar as company property.`,
+    (n) => `Owning your time matters (${n}). Solo, freelance, senior, and founder tracks are where this gets satisfied first.`,
+    (n) => `${n} on autonomy means the classic "put in your dues" path will chafe more than usual — pick fields that trust juniors early.`,
+  ],
+  prestige: [
+    (n) => `Being respected at the top of a field matters (${n}) — pick a field where the top is worth being at.`,
+    (n) => `Prestige scored ${n} — that's honest, and it should shape which fields you enter, not just which jobs.`,
+    (n) => `You want the field to know your name (${n}). Fine — but the long apprenticeship is the price.`,
+    (n) => `Status inside a serious community scored ${n} — a real filter, not a shallow one.`,
+  ],
+  stability: [
+    (n) => `Stability scored ${n} — a trustworthy path, not a lottery ticket, is what you want.`,
+    (n) => `You want the ground to feel solid (${n}). Established fields with clear paths (medicine, law, corporate engineering) fit; startup roulette doesn't.`,
+    (n) => `${n} on stability means volatility will cost you more than it costs most people. Pick institutions, not adventures.`,
+    (n) => `A steady paycheck ranks higher than upside for you (${n}) — don't feel bad about it; a lot of people fake the opposite.`,
+  ],
+  growth: [
+    (n) => `Learning scored ${n} — you'll measure jobs by what you're becoming, not just by what you're earning.`,
+    (n) => `${n} on growth means a plateau is worse than a paycut for you.`,
+    (n) => `You want to be sharper every year (${n}). Filter for cultures where senior people are still learning.`,
+    (n) => `${n} on growth is a real filter — most people say they want it; you'll notice fast when it's absent.`,
+  ],
+  balance: [
+    (n) => `Life outside work scored ${n} — louder than most Grade 10 profiles would admit.`,
+    (n) => `Balance hit ${n} — the "grind culture" tracks (finance, early startups, big-law) will drain you faster than they build you.`,
+    (n) => `${n} on balance means the specific company matters more than the field — some in the same field respect evenings, most don't.`,
+    (n) => `You want a real life next to the job (${n}). Not selfish — clarifying. Rule out any culture that treats it as weakness.`,
+  ],
+  creativity_val: [
+    (n) => `Making things you own scored ${n} — not managing what others make.`,
+    (n) => `${n} on creative-ownership means "manager of a creative team" won't scratch it long-term. You need to be the maker.`,
+    (n) => `You want to be the one shipping (${n}) — filter for roles where the output has your name on it.`,
+    (n) => `Creative ownership hit ${n} — a real filter. Most creative-adjacent jobs are actually creative-adjacent-management; you'd notice.`,
+  ],
+};
+
 function buildSignature(dims) {
-  const ti = topKeys(dims.interests, 2);
-  const ts = topKeys(dims.strengths, 2);
+  const iEntries = Object.entries(dims.interests || {}).sort((a,b) => b[1] - a[1]);
+  const sEntries = Object.entries(dims.strengths || {}).sort((a,b) => b[1] - a[1]);
+  const wEntries = Object.entries(dims.weaknesses || {}).sort((a,b) => b[1] - a[1]);
+  const vEntries = Object.entries(dims.values || {}).sort((a,b) => b[1] - a[1]);
+  const [ti, ts] = [iEntries[0], sEntries[0]];
+  const [ts2] = [sEntries[1]];
+  const tw = wEntries[0];
+  const [v1, v2] = vEntries;
+  const iStrong = ti && ti[1] >= 55;
+  const sStrong = ts && ts[1] >= 55;
+  const wStrong = tw && tw[1] >= 55;
+  const seed = profileSeed(dims);
+
   const pieces = [];
 
-  // Interest piece — no change, still works
-  if (ti[0] === "analytical" && ts.includes("logic")) pieces.push("You think in systems.");
-  else if (ti[0] === "creative" && (ts.includes("creativity") || ts.includes("writing"))) pieces.push("You think in stories.");
-  else if (ti[0] === "social") pieces.push("You think in relationships.");
-  else if (ti[0] === "practical") pieces.push("You think in hands and outcomes.");
-  else if (ti[0] === "entrepreneurial") pieces.push("You think in bets.");
-  else if (ti[0] === "investigative") pieces.push("You think in questions.");
-  else pieces.push("You think for yourself.");
+  if (iStrong && sStrong) {
+    const slot = {
+      iP: phraseFor(INTEREST_PHRASE, ti[0], seed, 29) || DIM_LABELS.interests[ti[0]],
+      iN: ti[1],
+      sP: phraseFor(STRENGTH_PHRASE, ts[0], seed, 31) || DIM_LABELS.strengths[ts[0]],
+      sN: ts[1],
+      s2P: ts2 && ts2[1] >= 55 ? (phraseFor(STRENGTH_PHRASE, ts2[0], seed, 37) || DIM_LABELS.strengths[ts2[0]]) : null,
+      s2N: ts2 && ts2[1] >= 55 ? ts2[1] : null,
+    };
+    pieces.push(pickSlot(SIG_INTEREST_STRENGTH, seed, 43)(slot));
+  } else if (iStrong) {
+    pieces.push(pickSlot(SIG_INTEREST_ONLY, seed, 47)({
+      iP: phraseFor(INTEREST_PHRASE, ti[0], seed, 29) || DIM_LABELS.interests[ti[0]],
+      iN: ti[1],
+    }));
+  } else if (sStrong) {
+    pieces.push(pickSlot(SIG_STRENGTH_ONLY, seed, 53)({
+      sP: phraseFor(STRENGTH_PHRASE, ts[0], seed, 31) || DIM_LABELS.strengths[ts[0]],
+      sN: ts[1],
+    }));
+  } else {
+    pieces.push(pickSlot(SIG_NEUTRAL, seed, 59));
+  }
 
-  // Value piece — consider top 2, don't deny what might also be true
-  const valueEntries = Object.entries(dims.values || {}).sort((a, b) => b[1] - a[1]);
-  const [v1, s1] = valueEntries[0] || [];
-  const [v2, s2] = valueEntries[1] || [];
-  const close = v1 && v2 && s1 >= 60 && s2 >= 60 && (s1 - s2) <= 15;
+  // Value piece — combined phrase when two top values are close & both >=60,
+  // else score-specific single-value phrase from the pool.
+  const s1 = v1?.[1] || 0, s2v = v2?.[1] || 0;
+  const close = v1 && v2 && s1 >= 60 && s2v >= 60 && (s1 - s2v) <= 15;
 
   if (close) {
-    const combined = combinedValuePhrase(v1, v2);
+    const combined = combinedValuePhrase(v1[0], v2[0]);
     if (combined) { pieces.push(combined); return pieces.join(" "); }
   }
-  const single = singleValuePhrase(v1);
-  if (single) pieces.push(single);
+  if (v1 && s1 >= 55) {
+    const pool = SIG_VALUE_TAIL[v1[0]];
+    if (pool) pieces.push(pickSlot(pool, seed, 61)(s1));
+    else pieces.push(`Your top value is ${DIM_LABELS.values[v1[0]]} (${s1}).`);
+  } else if (wStrong) {
+    pieces.push(`Your loudest signal is a weakness (${DIM_LABELS.weaknesses[tw[0]]} at ${tw[1]}) — worth naming, because it will show up on the job whether you plan for it or not.`);
+  }
+
   return pieces.join(" ");
 }
 
@@ -4564,68 +5078,185 @@ function combinedValuePhrase(a, b) {
   }[key] || null;
 }
 
-// 3-4 behavioural patterns discovered in the answers
+// Behavioural patterns — enumerated dynamically from the user's actual score
+// pairs, then scored so we only surface the strongest 4. Every pattern's copy
+// bakes in the exact numbers so two users with slightly different scores get
+// visibly different sentences.
 function buildPatterns(dims) {
-  const out = [];
-  const s = dims.strengths, w = dims.weaknesses, v = dims.values, i = dims.interests;
+  const s = dims.strengths || {}, w = dims.weaknesses || {}, v = dims.values || {}, i = dims.interests || {};
+  const g = (obj, k) => obj[k] || 0;
+  const candidates = [];
 
-  if ((s.speaking || 0) >= 60 && (s.leadership || 0) >= 60)
-    out.push({ title: "Comfortable in front of a room", detail: "You scored high on both speaking and leadership. Most people fear the room — you scan it. That's rarer than you think, and it compounds fast in most careers." });
+  // Rarity phrase whose wording shifts with the pair's average strength.
+  const rare = (a, b) => {
+    const avg = (a + b) / 2;
+    if (avg >= 78) return "Genuinely uncommon at this age";
+    if (avg >= 68) return "A rare combination";
+    if (avg >= 60) return "An unusual combination";
+    return "A notable combination";
+  };
 
-  if ((s.focus || 0) >= 65 && (s.logic || 0) >= 60)
-    out.push({ title: "Long-focus problem solver", detail: "You can sit with a hard problem for hours without needing to talk it out. That's the exact rhythm engineering, research, and quant work reward." });
+  const push = (a, b, title, detail) => {
+    // Score = min of the pair (both must be high to matter) + a bonus for how
+    // far above threshold. Ties broken by which pair has the higher secondary.
+    const rank = Math.min(a, b) + (a + b) / 20;
+    candidates.push({ rank, title, detail });
+  };
 
-  if ((s.creativity || 0) >= 65 && (s.focus || 0) >= 55)
-    out.push({ title: "Rare: creative AND finisher", detail: "Most creative people don't ship. Most finishers don't invent. You do both — that's the signature of people who become respected in creative fields, not just talented in them." });
+  // ---- STRENGTH × STRENGTH pairs
+  if (g(s,"speaking") >= 60 && g(s,"leadership") >= 60)
+    push(s.speaking, s.leadership,
+      `Front-of-room capable (${s.speaking} speaking, ${s.leadership} leadership)`,
+      `${rare(s.speaking, s.leadership)} — most people fear the room; you scan it. In careers where visibility compounds (management, teaching, sales, founding), this is a multiplier from year one.`);
 
-  if ((s.empathy || 0) >= 65)
-    out.push({ title: "Reads people well", detail: "You noticed a lot of subtle interpersonal cues in your answers. That's the exact skill that separates a good manager, teacher, doctor, or designer from a technically-fine one." });
+  if (g(s,"focus") >= 65 && g(s,"logic") >= 60)
+    push(s.focus, s.logic,
+      `Long-focus problem-solver (focus ${s.focus}, logic ${s.logic})`,
+      `You can sit with a hard problem for hours without needing to talk it out — that focus number is ${scoreBand(s.focus)}, paired with logic at ${s.logic}. Engineering, research, quant work, and diagnostic medicine reward this rhythm.`);
 
-  if ((s.writing || 0) >= 65 && (s.logic || 0) >= 60)
-    out.push({ title: "Thinks clearly on paper", detail: "You can hold a hard argument in your head AND get it down clearly. That combination is what senior careers in law, journalism, research, and consulting are actually built on — most people have one, not both." });
+  if (g(s,"creativity") >= 65 && g(s,"focus") >= 55)
+    push(s.creativity, s.focus,
+      `Creative AND finisher (creativity ${s.creativity}, focus ${s.focus})`,
+      `Most creative people don't ship; most finishers don't invent. Your creativity at ${s.creativity} plus focus at ${s.focus} is the signature of people who get respected in creative fields, not just called talented.`);
 
-  if ((s.hands || 0) >= 65 && (i.practical || 0) >= 60)
-    out.push({ title: "Makes things real", detail: "You need to build, fix, or ship something you can touch. That energy fuels engineering, architecture, surgery, chef work — anything where the day ends with an artifact." });
+  if (g(s,"writing") >= 60 && g(s,"logic") >= 60)
+    push(s.writing, s.logic,
+      `Thinks clearly on paper (writing ${s.writing}, logic ${s.logic})`,
+      `You can hold a hard argument in your head and get it down clearly — writing at ${s.writing} with logic at ${s.logic}. Law, research, senior consulting, and journalism are built on this exact pairing.`);
 
-  if ((w.procrastination || 0) >= 60 && (w.perfectionism || 0) >= 60)
-    out.push({ title: "The 'either brilliant or nothing' trap", detail: "You show both procrastination and perfectionism. This isn't laziness — it's often fear of shipping something imperfect. Look for careers where 'ship, then iterate' is the culture." });
+  if (g(s,"empathy") >= 60 && g(s,"speaking") >= 55)
+    push(s.empathy, s.speaking,
+      `Reads AND talks to a room (empathy ${s.empathy}, speaking ${s.speaking})`,
+      `You notice what people actually feel and can respond to it out loud. That's the exact combination that separates a good teacher, therapist, or manager from a technically-fine one.`);
 
-  if ((w.social_drain || 0) >= 60 && (v.balance || 0) >= 60)
-    out.push({ title: "You need real recovery time", detail: "People drain you and balance matters to you. Careers with constant client interaction (sales, hospitality, consulting) will burn you out fast. Look for work where deep-focus days are possible." });
+  if (g(s,"hands") >= 60 && g(i,"practical") >= 55)
+    push(s.hands, i.practical,
+      `Needs to make things real (hands ${s.hands}, practical interest ${i.practical})`,
+      `You want a day that ends with an artifact you can touch — engineering, surgery, architecture, kitchens, industrial design all fit this energy.`);
 
-  if ((v.money || 0) >= 65 && (v.impact || 0) >= 65)
-    out.push({ title: "You want both — money AND meaning", detail: "This is often called impossible. It isn't — but it does narrow the field. Look at finance-for-impact (impact investing), tech-for-good, or founding something that solves a real problem." });
+  if (g(s,"leadership") >= 60 && g(i,"entrepreneurial") >= 60)
+    push(s.leadership, i.entrepreneurial,
+      `Builder profile (leadership ${s.leadership}, entrepreneurial interest ${i.entrepreneurial})`,
+      `You want to lead AND you're drawn to starting things. Founder / product / general-management paths are where this pair pays fastest.`);
 
-  if ((v.freedom || 0) >= 70 && (s.focus || 0) >= 55)
-    out.push({ title: "Autonomy is non-negotiable, and you can use it", detail: "You value freedom AND you have the focus to work independently — this is rare. Most people who crave freedom struggle without structure. You wouldn't." });
+  if (g(s,"empathy") >= 60 && g(s,"writing") >= 55)
+    push(s.empathy, s.writing,
+      `Sensitive AND articulate (empathy ${s.empathy}, writing ${s.writing})`,
+      `You notice subtle things about people and can put them into words. Fiction, journalism, therapy, UX research — anywhere the job is naming what others can only feel.`);
 
-  if ((v.stability || 0) >= 65 && (v.growth || 0) >= 65)
-    out.push({ title: "You want to grow AND feel safe", detail: "Look at established companies with strong internal learning cultures, or slower-moving fields where expertise compounds over years (medicine, law, architecture) instead of startup chaos." });
+  // ---- WEAKNESS × WEAKNESS / WEAKNESS × VALUE
+  if (g(w,"procrastination") >= 60 && g(w,"perfectionism") >= 60)
+    push(w.procrastination, w.perfectionism,
+      `The perfectionism → procrastination loop (${w.perfectionism} / ${w.procrastination})`,
+      `Both scored above 60. That's not laziness — it's fear of shipping something imperfect. Look for cultures where "ship, then iterate" is the norm (product, startups, journalism) rather than "one perfect submission" (academia, some parts of law).`);
 
-  return out.slice(0, 4);
+  if (g(w,"social_drain") >= 60 && g(v,"balance") >= 60)
+    push(w.social_drain, v.balance,
+      `Needs recovery time (social drain ${w.social_drain}, balance value ${v.balance})`,
+      `People drain you and you value your evenings. Client-heavy careers (sales, hospitality, front-line consulting) will burn you out fast; look for roles where deep-focus days are protected.`);
+
+  if (g(w,"conflict_avoid") >= 60 && g(s,"leadership") >= 55)
+    push(w.conflict_avoid, s.leadership,
+      `Leads but dodges friction (leadership ${s.leadership}, conflict-avoidance ${w.conflict_avoid})`,
+      `You have the instinct to lead but avoid hard conversations. In careers where the hard conversation IS the job (management, therapy, HR, senior legal), you'll need to build this deliberately — it's learnable but rarely from a book.`);
+
+  if (g(w,"boredom") >= 60 && g(v,"stability") >= 60)
+    push(w.boredom, v.stability,
+      `Bored fast but wants safe (boredom ${w.boredom}, stability ${v.stability})`,
+      `You get bored quickly but also want a stable path — that's a real tension. Look for stable-yet-varied roles: rotational programs at big companies, hospital medicine, teaching different subjects.`);
+
+  // ---- VALUE × VALUE
+  if (g(v,"money") >= 60 && g(v,"impact") >= 60)
+    push(v.money, v.impact,
+      `Wants money AND meaning (${v.money} / ${v.impact})`,
+      `Often called impossible — it isn't, but it narrows the field. Impact-investing, health tech, climate tech, or founding something that solves a real problem are where both scores get satisfied at once.`);
+
+  if (g(v,"freedom") >= 65 && g(s,"focus") >= 55)
+    push(v.freedom, s.focus,
+      `Autonomy is non-negotiable AND you can use it (${v.freedom} / focus ${s.focus})`,
+      `Most people who crave freedom struggle without structure — your focus at ${s.focus} means you probably wouldn't. Solo craft, freelance, founder, and independent research paths all sit here.`);
+
+  if (g(v,"stability") >= 60 && g(v,"growth") >= 60)
+    push(v.stability, v.growth,
+      `Wants to grow AND feel safe (${v.growth} / ${v.stability})`,
+      `Look at established companies with strong internal learning cultures, or slower-moving fields where expertise compounds over years (medicine, law, architecture) rather than raw startup chaos.`);
+
+  if (g(v,"creativity_val") >= 60 && g(v,"freedom") >= 60)
+    push(v.creativity_val, v.freedom,
+      `Wants to make things AND own the calendar (${v.creativity_val} / ${v.freedom})`,
+      `The freelance-creative / founder-artist profile. Real, but almost always requires 2-5 years of unglamorous training in someone else's shop first.`);
+
+  if (g(v,"growth") >= 60 && g(v,"prestige") >= 60)
+    push(v.growth, v.prestige,
+      `Wants to master AND be recognised (${v.growth} / ${v.prestige})`,
+      `The classic top-of-field profile — surgeons, senior researchers, respected creative directors. All require a long unglamorous apprenticeship where recognition doesn't yet exist.`);
+
+  // ---- INTEREST × STRENGTH sanity
+  if (g(i,"analytical") >= 60 && g(s,"logic") >= 65)
+    push(i.analytical, s.logic,
+      `Pattern-oriented mind (analytical interest ${i.analytical}, logic strength ${s.logic})`,
+      `Both scores line up — the interest is real, not just wishful. Data, research, engineering, and quantitative finance will feel like home.`);
+
+  if (g(i,"investigative") >= 60 && g(s,"focus") >= 60)
+    push(i.investigative, s.focus,
+      `Real curiosity, real patience (investigative ${i.investigative}, focus ${s.focus})`,
+      `You ask "but why?" and can actually sit with the answer. Research, medicine, and long-form journalism all pay for this exact rhythm.`);
+
+  candidates.sort((a, b) => b.rank - a.rank);
+  return candidates.slice(0, 4).map(({ title, detail }) => ({ title, detail }));
 }
 
-// Tensions — where their profile disagrees with itself
+// Tensions — where the profile disagrees with itself. Enumerated dynamically,
+// scored by how strong BOTH sides are, then the top 3 are surfaced. Every
+// tension bakes in the exact numbers so a 62 vs 88 pairing reads differently.
 function buildContrasts(dims) {
-  const out = [];
-  const v = dims.values, w = dims.weaknesses, s = dims.strengths;
+  const v = dims.values || {}, w = dims.weaknesses || {}, s = dims.strengths || {}, i = dims.interests || {};
+  const g = (obj, k) => obj[k] || 0;
+  const cands = [];
+  const push = (a, b, text) => cands.push({ rank: Math.min(a, b), text });
 
-  if ((v.money || 0) >= 60 && (v.balance || 0) >= 60)
-    out.push("You want serious money AND real work-life balance. Both are possible, but not in the same first job — most people who end up with both got the money first, then bought the balance.");
+  if (g(v,"money") >= 60 && g(v,"balance") >= 60)
+    push(v.money, v.balance,
+      `You want serious money (${v.money}) AND real work-life balance (${v.balance}). Both are possible — but almost never in the same first job. The people who end up with both usually got the money first (5-10 years of long weeks) and bought back the balance later.`);
 
-  if ((v.money || 0) >= 60 && (v.stability || 0) >= 60)
-    out.push("You want financial upside AND a paycheck you can count on — most careers force a trade. The exceptions are medicine, top-tier engineering, and senior corporate roles, but you have to wait for the seniority to unlock both.");
+  if (g(v,"money") >= 60 && g(v,"stability") >= 60)
+    push(v.money, v.stability,
+      `You want financial upside (${v.money}) AND a paycheck you can count on (${v.stability}). Medicine, senior engineering, and mid-career corporate roles unlock both — but expect the first 5 years to feel like you had to pick one.`);
 
-  if ((v.freedom || 0) >= 60 && (v.stability || 0) >= 60)
-    out.push("You want autonomy but also predictability. This tension is normal — look for senior roles at stable companies, or established solo practices (medicine, law). Avoid pure startups for the first job.");
+  if (g(v,"freedom") >= 60 && g(v,"stability") >= 60)
+    push(v.freedom, v.stability,
+      `Autonomy (${v.freedom}) AND predictability (${v.stability}) pull in opposite directions. The paths that hold both — established solo practices, senior roles at stable companies, tenured academia — all require putting in years first under someone else's calendar.`);
 
-  if ((s.creativity || 0) >= 60 && (v.prestige || 0) >= 60)
-    out.push("You're creative but you also want to be known. Most respected creatives went unpaid and unknown for 5-10 years first. Ask yourself whether the recognition is worth the wait.");
+  if (g(s,"creativity") >= 60 && g(v,"prestige") >= 60)
+    push(s.creativity, v.prestige,
+      `You're creative (${s.creativity}) AND want to be respected (${v.prestige}). The uncomfortable truth: most respected creatives went unpaid and unknown for 5-10 years. Decide now whether that lag is acceptable — most people who quit did so in year 3.`);
 
-  if ((v.impact || 0) >= 60 && (v.money || 0) >= 60 && (w.social_drain || 0) >= 55)
-    out.push("You want impact and money, but people-heavy work drains you. That's a hard combo — most impact/money careers are relational. Look at deep-research or product-building roles where impact happens through the artifact, not through daily interaction.");
+  if (g(v,"impact") >= 60 && g(v,"money") >= 60 && g(w,"social_drain") >= 55)
+    push(v.impact, w.social_drain,
+      `You want impact (${v.impact}) and money (${v.money}), but people-heavy work drains you (social-drain ${w.social_drain}). Most impact-and-money careers are relational — look at deep-research, product-engineering, or writing paths where impact travels through the artifact, not through the daily meeting.`);
 
-  return out.slice(0, 3);
+  if (g(v,"creativity_val") >= 60 && g(v,"stability") >= 60)
+    push(v.creativity_val, v.stability,
+      `Making things (${v.creativity_val}) AND a stable income (${v.stability}) is the hardest common combo. The workable versions are salaried creative roles (product designer, in-house writer, staff filmmaker) — not freelance, not "founder-artist," at least not first.`);
+
+  if (g(v,"impact") >= 60 && g(v,"prestige") >= 60)
+    push(v.impact, v.prestige,
+      `You want to matter (${v.impact}) AND to be known (${v.prestige}). Not contradictory — but be honest with yourself about which is louder when you're making a career choice, because most jobs weight one heavily.`);
+
+  if (g(s,"leadership") >= 60 && g(w,"conflict_avoid") >= 55)
+    push(s.leadership, w.conflict_avoid,
+      `You want to lead (${s.leadership}) but avoid hard conversations (${w.conflict_avoid}). Leadership is almost entirely the hard conversation. This is learnable, but you'll need to build it deliberately — most people don't.`);
+
+  if (g(i,"entrepreneurial") >= 60 && g(v,"stability") >= 60)
+    push(i.entrepreneurial, v.stability,
+      `You're pulled toward starting things (${i.entrepreneurial}) but also want stability (${v.stability}). "Intrapreneur" roles (product, growth, corporate innovation) or founding after 3-5 years in a stable job usually fit better than a raw first-job startup.`);
+
+  if (g(v,"growth") >= 65 && g(v,"balance") >= 65)
+    push(v.growth, v.balance,
+      `You want fast growth (${v.growth}) AND real evenings (${v.balance}). The lever is company choice, not job title — some cultures compound skill without burning weekends. Ask about hours before ambition when interviewing.`);
+
+  cands.sort((a, b) => b.rank - a.rank);
+  return cands.slice(0, 3).map(x => x.text);
 }
 
 function buildSimInsights(sims) {
@@ -4985,7 +5616,7 @@ function paletteCommands() {
     cmds.push({ label: q.title, hint: done ? "Quiz · done" : "Quiz", action: "go", screen: (done ? "quiz-result:" : "quiz:") + q.key, kw: "assessment test " + q.key });
   });
   CAREERS.filter(c => SIM_READY.has(c.id)).forEach(c => {
-    cmds.push({ label: "Simulate: " + c.label, hint: "Sim · " + c.group, action: "start-sim", careerId: c.id, kw: "live day " + c.group.toLowerCase() });
+    cmds.push({ label: "Simulate: " + c.label, hint: "Sim · " + (c.subgroup || c.group), action: "start-sim", careerId: c.id, kw: "live day " + (c.subgroup || c.group).toLowerCase() });
   });
   cmds.push({ label: (state.dark ? "Switch to light theme" : "Switch to dark theme"), hint: "Action", action: "toggle-theme", kw: "appearance mode" });
   cmds.push({ label: "Sign out", hint: "Action", action: "logout", kw: "log out" });
@@ -5811,7 +6442,7 @@ function quizTakeawayFor(key, sortedDims) {
 // CAREER PICKER
 // ============================================================
 function renderCareers() {
-  const filtered = state.careerFilter === "All" ? CAREERS : CAREERS.filter(c => c.group === state.careerFilter);
+  const filtered = state.careerFilter === "All" ? CAREERS : CAREERS.filter(c => (c.subgroup || c.group) === state.careerFilter);
   return `
     ${renderNav()}
     <div class="container wide rise">
@@ -5823,7 +6454,7 @@ function renderCareers() {
       </div>
 
       <div class="filter-row">
-        ${["All", ...CAREER_GROUPS].map(g => `
+        ${["All", ...CAREER_SUBGROUPS].map(g => `
           <button class="filter-chip ${state.careerFilter === g ? "active" : ""}" data-action="filter-career" data-group="${esc(g)}">${esc(g)}</button>
         `).join("")}
       </div>
@@ -5838,7 +6469,7 @@ function renderCareers() {
                 <div class="career-card-top">
                   <span class="badge badge-soon">COMING SOON</span>
                 </div>
-                <div class="career-card-cat">${esc(c.group.toUpperCase())}</div>
+                <div class="career-card-cat">${esc((c.subgroup || c.group).toUpperCase())}</div>
                 <div class="career-card-title">${esc(c.label)}</div>
                 <div class="career-card-desc">${esc(c.plain)}</div>
               </button>
@@ -5849,7 +6480,7 @@ function renderCareers() {
               <div class="career-card-top">
                 ${done ? `<span class="badge badge-brand">${done.verdict.score}</span>` : ""}
               </div>
-              <div class="career-card-cat">${esc(c.group.toUpperCase())}</div>
+              <div class="career-card-cat">${esc((c.subgroup || c.group).toUpperCase())}</div>
               <div class="career-card-title">${esc(c.label)}</div>
               <div class="career-card-desc">${esc(c.plain)}</div>
             </button>
@@ -6402,7 +7033,7 @@ function renderReport() {
             <div class="card" style="padding:26px;">
               <div class="row-between mb-md" style="gap:16px;align-items:flex-start;">
                 <div>
-                  <div class="mono" style="font-size:11px;color:var(--faint);letter-spacing:0.5px;margin-bottom:6px;">#${i+1} · ${esc(c.group)}</div>
+                  <div class="mono" style="font-size:11px;color:var(--faint);letter-spacing:0.5px;margin-bottom:6px;">#${i+1} · ${esc(c.subgroup || c.group)}</div>
                   <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:28px;letter-spacing:-0.4px;line-height:1.1;">${esc(c.career)}</div>
                 </div>
                 <span class="badge ${c.fit >= 75 ? "badge-good" : c.fit >= 60 ? "badge-warn" : ""}" style="font-size:13px;padding:6px 10px;">${c.fit}% fit</span>
