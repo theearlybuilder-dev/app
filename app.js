@@ -4930,6 +4930,7 @@ function buildLocalReport() {
   const simInsights = state.completedSims.length ? buildSimInsights(state.completedSims) : null;
 
   return {
+    schemaVersion: REPORT_SCHEMA_VERSION,
     headline: generateHeadline(dims),
     profile: generateProfile(dims),
     compass: buildCompass(dims),
@@ -5425,13 +5426,24 @@ function dataKey(base, email) {
 const _initUser = store.get("cc_user", null);
 const _initEmail = _initUser?.email || null;
 
+// Bump when the report's shape or copy changes in a way that makes previously
+// cached reports look stale. `loadReport` silently discards any cached report
+// whose stamp doesn't match; the report screen auto-regenerates from fresh
+// quiz answers on next visit.
+const REPORT_SCHEMA_VERSION = 2;
+function loadReport(email) {
+  const r = store.get(dataKey("report", email), null);
+  if (!r || r.schemaVersion !== REPORT_SCHEMA_VERSION) return null;
+  return r;
+}
+
 const state = {
   screen: store.get("cc_screen", "landing"),
   user: _initUser,
   dark: store.get("cc_dark_v2", true),
   quizAnswers: store.get(dataKey("quizAnswers", _initEmail), {}),
   completedSims: store.get(dataKey("sims", _initEmail), []),
-  report: store.get(dataKey("report", _initEmail), null),
+  report: loadReport(_initEmail),
   // Careers the user marked "Not interested." Devalues subgroup siblings by
   // DISMISS_SIBLING_PENALTY per dismissal so a whole cluster naturally drops
   // out of the top-6 after 1-2 dismissals. Persisted so it survives reloads.
@@ -5466,7 +5478,7 @@ if (_initEmail) {
     if (hasLegacy) {
       state.quizAnswers = legacyQ || {};
       state.completedSims = legacyS || [];
-      state.report = legacyR || null;
+      state.report = (legacyR && legacyR.schemaVersion === REPORT_SCHEMA_VERSION) ? legacyR : null;
     }
   }
 }
@@ -5486,7 +5498,7 @@ function persist() {
 function loadAccountData(email) {
   state.quizAnswers = store.get(dataKey("quizAnswers", email), {});
   state.completedSims = store.get(dataKey("sims", email), []);
-  state.report = store.get(dataKey("report", email), null);
+  state.report = loadReport(email);
   state.dismissedCareers = store.get(dataKey("dismissed", email), []);
 }
 
@@ -8260,7 +8272,7 @@ document.addEventListener("click", (e) => {
     // Reset in-memory state to what the guest would see
     state.quizAnswers = store.get(dataKey("quizAnswers", null), {});
     state.completedSims = store.get(dataKey("sims", null), []);
-    state.report = store.get(dataKey("report", null), null);
+    state.report = loadReport(null);
     go("landing");
   }
   else if (action === "toggle-theme") { state.dark = !state.dark; render(true); }
