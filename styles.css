@@ -3670,10 +3670,7 @@ body[data-chrome="sidebar"] #app { flex-direction: row; align-items: stretch; }
   max-width: 24ch;
 }
 .rpt-hero-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 340px);
-  gap: clamp(28px, 4vw, 56px);
-  align-items: start;
+  display: block;
 }
 .rpt-hero-profile {
   font-size: 17px;
@@ -3681,31 +3678,6 @@ body[data-chrome="sidebar"] #app { flex-direction: row; align-items: stretch; }
   color: var(--ink-soft);
   max-width: 62ch;
   margin: 0;
-}
-.rpt-hero-signature {
-  padding: 20px 22px;
-  border-left: 3px solid var(--brand);
-  background: linear-gradient(140deg, var(--brand-soft), transparent 90%);
-  border-radius: 0 12px 12px 0;
-}
-.rpt-hero-signature-k {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: .14em;
-  color: var(--brand-ink);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.rpt-hero-signature-v {
-  font-family: var(--font-sans);
-  font-weight: 650;
-  font-size: 17px;
-  line-height: 1.35;
-  letter-spacing: -.015em;
-  color: var(--brand-ink);
-}
-@media (max-width: 780px) {
-  .rpt-hero-body { grid-template-columns: 1fr; }
 }
 
 .rpt-snap {

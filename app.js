@@ -698,69 +698,239 @@ function phraseFor(bank, key, seed, salt) {
   return pickSlot(pool, seed, salt);
 }
 
-// 10 headline skeletons × 4 variants per dim slot = tens of thousands of
-// distinct outputs. Selected deterministically by the profile seed so the
-// same user always gets the same headline, and two users with even a small
-// score difference land on different slots.
-const REPORT_HEADLINE_TEMPLATES = [
-  ({iP, sP, vC, iN, sN}) => `You're pulled toward ${iP} (${iN}), backed by ${sP} (${sN}) — ${vC}.`,
-  ({iP, sP, vC, iN, sN}) => `Your ${sP} (${sN}) meets a real interest in ${iP} (${iN}) — ${vC}.`,
-  ({iP, sP, vC, iN, sN}) => `The clearest signal in your quizzes: ${sP} at ${sN}, and a pull toward ${iP} at ${iN}. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `${cap(iP)} runs your engine — you scored ${iN} there — and your ${sP} (${sN}) is what will make it work. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `Between your pull toward ${iP} (${iN}) and your ${sP} (${sN}), the shape of your career is already visible — ${vC}.`,
-  ({iP, sP, vC, iN, sN}) => `Two numbers tell your story: ${iP} at ${iN}, and ${sP} at ${sN}. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `You're built for work involving ${iP} (${iN}) — your ${sP} (${sN}) makes it more than a preference, it's leverage. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `Your pull toward ${iP} scored ${iN}, and your ${sP} scored ${sN} — the interest is real AND you have the raw material to act on it. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `${cap(sP)} (${sN}) plus ${iP} (${iN}) — that pair puts you on a shortlist most Grade 10 profiles don't reach. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `Read your quizzes together and one line falls out: ${iP} (${iN}) as the interest, ${sP} (${sN}) as the strength, ${vC.replace(/^and /, "")} as the aim.`,
+// Identity-first headline. Each archetype scores itself against the FULL
+// mix of dims (interests + strengths + values + workstyle + weaknesses), so
+// the winner reflects a combination — not just the single top score. Two
+// users with the same top interest but different secondary signals will
+// land in different archetypes.
+//
+// Score formula per archetype: sum of `posContrib(dim, floor) * weight` for
+// each supporting signal, minus penalties for signals that would push the
+// user toward a different archetype. `posContrib` is 0 below the floor and
+// grows linearly above it — so weak dims contribute nothing, strong dims
+// dominate, and no single dim can carry an archetype on its own.
+const _dv = (d, cat, key) => (d[cat] && d[cat][key]) || 0;
+const _ws = (d, key) => (d.workstyle && d.workstyle[key]) ? 1 : 0;
+const _pos = (v, floor) => Math.max(0, (v || 0) - floor);
+
+const ARCHETYPES = [
+  {
+    id: "go_getter",
+    line: "You're a go-getter — starting things is your default, and waiting for permission wears you down fast. The wheel is where you belong, not the passenger seat.",
+    score: (d) =>
+      _pos(_dv(d,"interests","entrepreneurial"), 55) * 1.6 +
+      _pos(_dv(d,"strengths","leadership"), 55) * 1.2 +
+      _pos(_dv(d,"values","freedom"), 55) * 0.9 +
+      _ws(d,"risk") * 10 + _ws(d,"fast") * 5 +
+      _ws(d,"front") * 3 -
+      _pos(_dv(d,"values","stability"), 75) * 0.6,
+  },
+  {
+    id: "quiet_operator",
+    line: "You're a quiet operator — deep problems in quiet rooms are where you actually pull ahead. You solve; you don't sell, and any job that flips that ratio will grind you down.",
+    score: (d) =>
+      _pos(_dv(d,"strengths","focus"), 55) * 1.5 +
+      _pos(_dv(d,"strengths","logic"), 55) * 1.2 +
+      _pos(_dv(d,"interests","analytical"), 55) * 0.7 +
+      _pos(_dv(d,"interests","investigative"), 55) * 0.7 +
+      _ws(d,"solo") * 8 + _ws(d,"specialist") * 4 -
+      _pos(_dv(d,"strengths","speaking"), 70) * 0.5 -
+      _pos(_dv(d,"interests","social"), 70) * 0.4,
+  },
+  {
+    id: "builder_finisher",
+    line: "You're the rare kind — creative AND you actually ship. Most people are one or the other; that combination is what separates respected from merely talented.",
+    score: (d) =>
+      _pos(_dv(d,"strengths","creativity"), 55) * 1.3 +
+      _pos(_dv(d,"strengths","focus"), 55) * 1.3 +
+      _pos(_dv(d,"interests","creative"), 50) * 0.7 +
+      _pos(_dv(d,"values","creativity_val"), 55) * 0.6,
+  },
+  {
+    id: "quiet_leader",
+    line: "You're a quiet leader — people trust you before you've said much. You lead by reading the room, not by owning the mic, and the authority holds because it isn't performed.",
+    score: (d) =>
+      _pos(_dv(d,"strengths","leadership"), 55) * 1.5 +
+      _pos(_dv(d,"strengths","empathy"), 55) * 1.3 +
+      _pos(_dv(d,"interests","social"), 55) * 0.5 -
+      _pos(_dv(d,"strengths","speaking"), 72) * 0.7,
+  },
+  {
+    id: "front_of_room",
+    line: "You come alive in rooms — persuasion is how you naturally move through the world, not a skill you had to learn. Any job that hides you from people will feel like a cage inside a month.",
+    score: (d) =>
+      _pos(_dv(d,"strengths","speaking"), 55) * 1.5 +
+      _pos(_dv(d,"strengths","leadership"), 55) * 1.0 +
+      _pos(_dv(d,"interests","social"), 55) * 1.0 +
+      _pos(_dv(d,"strengths","empathy"), 55) * 0.5 +
+      _ws(d,"front") * 6 -
+      _pos(_dv(d,"weaknesses","social_drain"), 60) * 0.6,
+  },
+  {
+    id: "craftsperson",
+    line: "You're a craftsperson — you need to make things that are yours, with your name on them. Managing other people's creative output would slowly kill you.",
+    score: (d) =>
+      _pos(_dv(d,"values","creativity_val"), 55) * 1.5 +
+      _pos(_dv(d,"strengths","creativity"), 55) * 1.0 +
+      _pos(_dv(d,"strengths","focus"), 50) * 0.6 +
+      _pos(_dv(d,"interests","creative"), 55) * 0.7 +
+      _ws(d,"solo") * 4 + _ws(d,"specialist") * 3,
+  },
+  {
+    id: "analyst",
+    line: "You're an analyst at heart — you'd rather be right than fast. Problems that need a proof are where you slow down and everyone else speeds up wrong.",
+    score: (d) =>
+      _pos(_dv(d,"interests","analytical"), 55) * 1.4 +
+      _pos(_dv(d,"strengths","logic"), 55) * 1.3 +
+      _pos(_dv(d,"strengths","focus"), 50) * 0.7 +
+      _ws(d,"careful") * 4 + _ws(d,"detail") * 3,
+  },
+  {
+    id: "investigator",
+    line: "You're an investigator — you get to the bottom of things other people give up on. Slow answers to deep questions is your natural rhythm, and it's rarer than it looks at your age.",
+    score: (d) =>
+      _pos(_dv(d,"interests","investigative"), 55) * 1.6 +
+      _pos(_dv(d,"strengths","focus"), 55) * 1.2 +
+      _pos(_dv(d,"strengths","logic"), 55) * 0.4 +
+      _pos(_dv(d,"strengths","writing"), 55) * 0.4 +
+      _ws(d,"theory") * 4,
+  },
+  {
+    id: "people_person",
+    line: "You're a people person — you read a room faster than you think, and any career that hides you from humans will feel wrong within weeks. People aren't the setting for you; they're the point.",
+    score: (d) =>
+      _pos(_dv(d,"interests","social"), 55) * 1.4 +
+      _pos(_dv(d,"strengths","empathy"), 55) * 1.4 +
+      _pos(_dv(d,"values","impact"), 55) * 0.6 +
+      _ws(d,"team") * 4,
+  },
+  {
+    id: "hands_on_maker",
+    line: "You're a hands-on maker — you want a day that ends with something you can actually touch. Slide decks and status calls would drain you dry inside a year.",
+    score: (d) =>
+      _pos(_dv(d,"strengths","hands"), 55) * 1.5 +
+      _pos(_dv(d,"interests","practical"), 55) * 1.3 +
+      _pos(_dv(d,"strengths","creativity"), 50) * 0.4 +
+      _ws(d,"doing") * 5,
+  },
+  {
+    id: "sharp_writer",
+    line: "You're a sharp writer — you think clearly on the page in a way most people can't. Arguments are your medium, and careers built on written craft will reward you faster than most tracks.",
+    score: (d) =>
+      _pos(_dv(d,"strengths","writing"), 55) * 1.6 +
+      _pos(_dv(d,"strengths","logic"), 50) * 0.9 +
+      _pos(_dv(d,"strengths","focus"), 50) * 0.4 +
+      _pos(_dv(d,"interests","creative"), 55) * 0.3 +
+      _pos(_dv(d,"interests","investigative"), 55) * 0.3,
+  },
+  {
+    id: "steady_grower",
+    line: "You're a steady grower — you want to get sharper every year without gambling the ground under you. Solid institutions with real learning cultures fit you far better than roulette.",
+    score: (d) =>
+      _pos(_dv(d,"values","growth"), 55) * 1.3 +
+      _pos(_dv(d,"values","stability"), 55) * 1.2 +
+      _ws(d,"structured") * 5 + _ws(d,"safe") * 4 -
+      _pos(_dv(d,"values","freedom"), 78) * 0.6 -
+      _pos(_dv(d,"interests","entrepreneurial"), 75) * 0.5,
+  },
+  {
+    id: "balance_realist",
+    line: "You're a balance-first realist — life outside work matters as much as inside, and you're not willing to trade your 20s away for a title. That's clarifying, not lazy — it rules out grind-culture fields fast.",
+    score: (d) =>
+      _pos(_dv(d,"values","balance"), 60) * 1.7 +
+      _pos(_dv(d,"values","stability"), 50) * 0.5 -
+      _pos(_dv(d,"interests","entrepreneurial"), 75) * 0.7 -
+      _pos(_dv(d,"values","prestige"), 70) * 0.4,
+  },
+  {
+    id: "independent_earner",
+    line: "You want to earn well AND own your calendar — that combination is real, and it's a filter, not a wish. Most jobs will fail one of the two; the ones that pass usually come after you've earned credibility first.",
+    score: (d) =>
+      _pos(_dv(d,"values","freedom"), 60) * 1.3 +
+      _pos(_dv(d,"values","money"), 60) * 1.3 +
+      _pos(_dv(d,"interests","entrepreneurial"), 55) * 0.6 +
+      _ws(d,"specialist") * 3,
+  },
+  {
+    id: "impact_driven",
+    line: "You're impact-driven — the day has to matter for someone else, or the money won't cover the hollowness. Fields that only pay well will drain you faster than they build you.",
+    score: (d) =>
+      _pos(_dv(d,"values","impact"), 60) * 1.6 +
+      _pos(_dv(d,"strengths","empathy"), 50) * 0.6 +
+      _pos(_dv(d,"interests","social"), 50) * 0.4 -
+      _pos(_dv(d,"values","money"), 78) * 0.4,
+  },
+  {
+    id: "prestige_climber",
+    line: "You want to be near the top of a serious field — and you know the long apprenticeship is the price. Pick the field carefully; the peak has to be worth reaching, because you'll spend years getting there.",
+    score: (d) =>
+      _pos(_dv(d,"values","prestige"), 60) * 1.5 +
+      _pos(_dv(d,"values","growth"), 55) * 0.8 +
+      _pos(_dv(d,"strengths","focus"), 55) * 0.5 +
+      _ws(d,"specialist") * 3,
+  },
 ];
 
-// Headline variants for when only interest OR only strength or only value cleared.
-const HEADLINE_PARTIAL_INTEREST = [
-  ({iP, iN}) => `Your one strong signal is a pull toward ${iP} — it scored ${iN}, and nothing else in your profile is close.`,
-  ({iP, iN}) => `${cap(iP)} (${iN}) is the loudest thing in your quizzes — the rest of the profile is quiet, so start there.`,
-  ({iP, iN}) => `You lean toward ${iP} (${iN}) — a real signal, though the strengths to back it haven't yet shown up.`,
-  ({iP, iN}) => `The interest is clear: ${iP} at ${iN}. What's less clear is the strength to power it — that's the next thing to test.`,
+const STILL_FORMING_LINES = [
+  "You're still forming — your scores clustered near the middle across most dimensions, and that's real information, not a bug. You haven't yet had the experiences that force preferences to sharpen; the fix isn't more quizzes, it's trying things wildly different from each other.",
+  "You're at the edge of a lane, not inside one yet — nothing in your quizzes punched clearly above the middle. That's normal at your age. The fastest way through is doing things that force you to notice what you actually like versus what you're just okay with.",
 ];
-const HEADLINE_PARTIAL_STRENGTH = [
-  ({sP, sN}) => `Your one clear strength is ${sP} at ${sN} — start from the strength, work backward to which fields pay best for it.`,
-  ({sP, sN}) => `${cap(sP)} scored ${sN} — everything else clustered near the middle, so pick a field that pays for this and figure out fit from there.`,
-  ({sP, sN}) => `The number that stands out: ${sP} at ${sN}. Interests will follow the strength if you let them.`,
-  ({sP, sN}) => `You've got real ${sP} (${sN}) but the interests haven't sharpened — that's normal, and the strength gives you time to explore.`,
-];
-const HEADLINE_PARTIAL_VALUE = [
-  ({vC, vN}) => `Your quizzes didn't strongly sort your interests or strengths — but your top value scored ${vN}, ${vC}. Start the search from that.`,
-  ({vC, vN}) => `The only thing that punched above the middle was the value: ${vN}. ${cap(vC)}. That's a filter, not a job description — but it's a real one.`,
-];
+
+function selectArchetype(dims) {
+  const scored = ARCHETYPES
+    .map(a => ({ id: a.id, line: a.line, score: a.score(dims) }))
+    .sort((x, y) => y.score - x.score);
+  const top = scored[0];
+  if (!top || top.score < 20) {
+    const seed = profileSeed(dims);
+    return { id: "still_forming", line: pickSlot(STILL_FORMING_LINES, seed, 3) };
+  }
+  return top;
+}
+
+// Optional tension clause — one short sentence when the winning archetype
+// has a strong contradicting signal in the profile. Adds honesty without
+// diluting the identity line.
+function tensionClause(dims, archetype) {
+  const w = dims.weaknesses || {}, v = dims.values || {}, s = dims.strengths || {};
+  const seed = profileSeed(dims);
+  const clauses = [];
+
+  if (archetype.id === "go_getter" && (w.conflict_avoid || 0) >= 65)
+    clauses.push("The catch: you also duck hard conversations. That's the one skill starters can't skip — worth building on purpose, early.");
+  if ((archetype.id === "builder_finisher" || archetype.id === "craftsperson") && (w.perfectionism || 0) >= 65)
+    clauses.push("The trap to plan around: holding work back until it's perfect. Ship earlier than feels comfortable — that's the real discipline.");
+  if (archetype.id !== "still_forming" && (w.focus_bad || 0) >= 65 && (s.focus || 0) < 55)
+    clauses.push("Watch-out: your attention skitters. Pick problems short enough to finish before boredom hits, and outsource the long ones.");
+  if (archetype.id === "front_of_room" && (w.social_drain || 0) >= 60)
+    clauses.push("Careful — you also drain fast around people. Build recovery into the calendar; treat it as fuel, not weakness.");
+  if (archetype.id === "quiet_operator" && (v.prestige || 0) >= 70)
+    clauses.push("Odd tension: you want prestige too, and quiet operators usually earn it late. Pick a field where craft eventually gets visible.");
+  if (archetype.id === "impact_driven" && (v.money || 0) >= 70)
+    clauses.push("You want impact AND real money — a narrower list, but real. Don't pretend one of the two isn't there.");
+  if (archetype.id === "steady_grower" && (v.freedom || 0) >= 70)
+    clauses.push("The tension to notice: you also want freedom. Steady institutions rarely give it early — plan for it as a later stage, not year one.");
+  if (archetype.id === "balance_realist" && (v.money || 0) >= 70)
+    clauses.push("Balance AND real money is a narrow shortlist — usually careers where compensation tracks skill, not hours (senior craft, specialist consulting).");
+  if (archetype.id === "hands_on_maker" && (v.money || 0) >= 70)
+    clauses.push("You also want to earn well — hands-on work that pays takes longer to reach the top, but the top pays well (surgery, senior trades, industrial design leadership).");
+  if (archetype.id === "analyst" && (v.impact || 0) >= 70)
+    clauses.push("You want impact too — that steers you away from pure abstract analysis toward applied fields (medicine, policy, applied research).");
+  if (archetype.id === "independent_earner" && (w.conflict_avoid || 0) >= 65)
+    clauses.push("Watch-out: independence eventually means naming hard things to clients or partners. Build that muscle before you'll need it.");
+  if (archetype.id === "quiet_leader" && (w.conflict_avoid || 0) >= 65)
+    clauses.push("The one gap: quiet leaders still have to name hard things out loud sometimes. Practice the direct ask early.");
+  if (archetype.id === "prestige_climber" && (v.balance || 0) >= 70)
+    clauses.push("Tension worth naming: you want balance too, and the long apprenticeship rarely gives it. Pick fields where the peak eventually returns time to you.");
+
+  if (!clauses.length) return "";
+  return pickSlot(clauses, seed, 71);
+}
 
 function generateHeadline(dims) {
-  const iEntries = Object.entries(dims.interests || {}).sort((a,b) => b[1] - a[1]);
-  const sEntries = Object.entries(dims.strengths || {}).sort((a,b) => b[1] - a[1]);
-  const vEntries = Object.entries(dims.values || {}).sort((a,b) => b[1] - a[1]);
-  const [ti, ts] = [iEntries[0], sEntries[0]];
-  const [tv] = [vEntries[0]];
-
-  const iStrong = ti && ti[1] >= 55;
-  const sStrong = ts && ts[1] >= 55;
-  const vStrong = tv && tv[1] >= 55;
-
-  if (!iStrong && !sStrong && !vStrong) {
-    return "Your scores clustered near the middle across almost every dimension — a real signal in itself. It usually means you haven't yet had the experiences that force preferences to sharpen. Try things wildly different from each other — the contrast is what teaches you.";
-  }
-
-  const seed = profileSeed(dims);
-  const slot = { iN: ti?.[1]||0, sN: ts?.[1]||0, vN: tv?.[1]||0 };
-  slot.iP = iStrong ? phraseFor(INTEREST_PHRASE, ti[0], seed, 11) : null;
-  slot.sP = sStrong ? phraseFor(STRENGTH_PHRASE, ts[0], seed, 23) : null;
-  slot.vC = vStrong ? phraseFor(VALUE_CLAUSE, tv[0], seed, 41) : null;
-
-  if (iStrong && sStrong && vStrong) {
-    const tpl = pickSlot(REPORT_HEADLINE_TEMPLATES, seed, 7);
-    return tpl(slot);
-  }
-  if (iStrong) return pickSlot(HEADLINE_PARTIAL_INTEREST, seed, 13)(slot);
-  if (sStrong) return pickSlot(HEADLINE_PARTIAL_STRENGTH, seed, 17)(slot);
-  return pickSlot(HEADLINE_PARTIAL_VALUE, seed, 19)(slot);
+  const arche = selectArchetype(dims);
+  const tension = tensionClause(dims, arche);
+  return tension ? `${arche.line} ${tension}` : arche.line;
 }
 
 // Sentence pools for the profile paragraph. Each pool has 5-6 variants so
@@ -4754,7 +4924,6 @@ function buildLocalReport() {
     };
   });
 
-  const signature = buildSignature(dims);
   const patterns = buildPatterns(dims);
   const contrasts = buildContrasts(dims);
   const quizBreakdown = buildQuizBreakdown(dims);
@@ -4763,7 +4932,6 @@ function buildLocalReport() {
   return {
     headline: generateHeadline(dims),
     profile: generateProfile(dims),
-    signature,
     compass: buildCompass(dims),
     compassFits: scored.slice(0, 3).map(c => ({
       career: c.label,
@@ -4954,188 +5122,6 @@ function workstyleTakeaway(picks) {
   if (set.has("generalist")) parts.push("You want many things at once — founder, PM, journalist, and consulting roles reward this");
   if (!parts.length) return "Your work-style preferences should filter your career list at the environment level — before job title even matters.";
   return parts.slice(0, 3).join("; ") + ".";
-}
-
-// A short, distinctive 2-line "signature" — what makes this student specific
-// Signature — 1-2 sentence "who this person is at their core" line.
-// Composed from slot pools so two users with the same top interest but
-// different secondary strengths (or different exact scores) diverge.
-const SIG_INTEREST_STRENGTH = [
-  ({iP, iN, sP, sN, s2P, s2N}) => `Your pull toward ${iP} (${iN}) runs on ${sP} (${sN})${s2P ? `, backed by ${s2P} at ${s2N}` : ""} — that's the engine to build a career around.`,
-  ({iP, iN, sP, sN, s2P, s2N}) => `${cap(iP)} (${iN}) is the pull; ${sP} (${sN}) is what makes it more than a preference${s2P ? `, and ${s2P} at ${s2N} keeps it durable` : ""}.`,
-  ({iP, iN, sP, sN, s2P, s2N}) => `You're wired for ${iP} (${iN}) and you have the ${sP} (${sN}) to actually do it${s2P ? ` — ${s2P} at ${s2N} is the safety net` : ""}.`,
-  ({iP, iN, sP, sN, s2P, s2N}) => `Two numbers point in the same direction: ${iP} at ${iN} (interest) and ${sP} at ${sN} (strength)${s2P ? `, with ${s2P} (${s2N}) as a second strength that fits` : ""}.`,
-  ({iP, iN, sP, sN, s2P, s2N}) => `The pattern is clear: ${iP} (${iN}) is where your attention wants to go, and ${sP} (${sN}) is what you're actually good at when it gets there${s2P ? `. ${cap(s2P)} at ${s2N} adds range.` : "."}`,
-  ({iP, iN, sP, sN, s2P, s2N}) => `You're the ${iP}-plus-${sP} shape — ${iN} on the interest, ${sN} on the strength${s2P ? `, and ${s2P} at ${s2N} rounds it out` : ""}. That combination is rarer than you'd think.`,
-];
-const SIG_INTEREST_ONLY = [
-  ({iP, iN}) => `You're drawn to ${iP} (${iN}) — the interest is real, but the strengths to power it haven't yet cleared the middle.`,
-  ({iP, iN}) => `Your pull toward ${iP} scored ${iN}. What's missing is the strength to convert it — that's your next thing to build.`,
-  ({iP, iN}) => `${cap(iP)} (${iN}) is loud in your quizzes; the strengths quiz was quieter. The interest is the compass; you need to sharpen a strength to move.`,
-];
-const SIG_STRENGTH_ONLY = [
-  ({sP, sN}) => `Your one clear strength is ${sP} at ${sN} — start from the strength, work backward to which fields pay best for it.`,
-  ({sP, sN}) => `${cap(sP)} scored ${sN} — that's the leverage. The interest side hasn't sharpened yet, but the strength buys you time to explore.`,
-  ({sP, sN}) => `You've got real ${sP} (${sN}). The question isn't whether it's useful — it's which field pays most for exactly this.`,
-];
-const SIG_NEUTRAL = [
-  "Nothing in your scores punched above the middle yet — that's real signal, not a bug. It usually means you haven't had the experiences that force preferences to sharpen.",
-  "Your scores landed near the middle across the board. That's more common than you'd think at your age, and it's a real signal to go try wildly different things.",
-  "The quizzes didn't sort you into a strong lane. Two paths: retake them and lean toward the ends of each scale, or use the sim to force yourself into decisions and see what surfaces.",
-];
-
-// Value tail — 4 skeleton variants per value key so users with the same
-// top value but different scores get different sentences.
-const SIG_VALUE_TAIL = {
-  money: [
-    (n) => `Money matters (${n}) — not the only thing, but on the list and honestly there.`,
-    (n) => `You're clear that the paycheck matters (${n}) — no need to pretend otherwise.`,
-    (n) => `Financial upside scored ${n} — treat that as a filter, not a dirty secret.`,
-    (n) => `Getting paid well is on your list (${n}). The careers that do it best demand specific tradeoffs; you're ready for them.`,
-  ],
-  impact: [
-    (n) => `Impact scored ${n} — you want the day to matter for someone else.`,
-    (n) => `You want work that changes something (${n}). A lot of high-paying jobs will feel hollow to you; skip them.`,
-    (n) => `Meaning outranked money on your list (${n}) — that clarifies which fields are actually candidates.`,
-    (n) => `Real-world impact hit ${n} — the compass will point away from careers that only pay well.`,
-  ],
-  freedom: [
-    (n) => `Autonomy over your day scored ${n} — that filters out about 80% of first jobs on its own.`,
-    (n) => `Freedom hit ${n} — you'll be miserable in any job that treats your calendar as company property.`,
-    (n) => `Owning your time matters (${n}). Solo, freelance, senior, and founder tracks are where this gets satisfied first.`,
-    (n) => `${n} on autonomy means the classic "put in your dues" path will chafe more than usual — pick fields that trust juniors early.`,
-  ],
-  prestige: [
-    (n) => `Being respected at the top of a field matters (${n}) — pick a field where the top is worth being at.`,
-    (n) => `Prestige scored ${n} — that's honest, and it should shape which fields you enter, not just which jobs.`,
-    (n) => `You want the field to know your name (${n}). Fine — but the long apprenticeship is the price.`,
-    (n) => `Status inside a serious community scored ${n} — a real filter, not a shallow one.`,
-  ],
-  stability: [
-    (n) => `Stability scored ${n} — a trustworthy path, not a lottery ticket, is what you want.`,
-    (n) => `You want the ground to feel solid (${n}). Established fields with clear paths (medicine, law, corporate engineering) fit; startup roulette doesn't.`,
-    (n) => `${n} on stability means volatility will cost you more than it costs most people. Pick institutions, not adventures.`,
-    (n) => `A steady paycheck ranks higher than upside for you (${n}) — don't feel bad about it; a lot of people fake the opposite.`,
-  ],
-  growth: [
-    (n) => `Learning scored ${n} — you'll measure jobs by what you're becoming, not just by what you're earning.`,
-    (n) => `${n} on growth means a plateau is worse than a paycut for you.`,
-    (n) => `You want to be sharper every year (${n}). Filter for cultures where senior people are still learning.`,
-    (n) => `${n} on growth is a real filter — most people say they want it; you'll notice fast when it's absent.`,
-  ],
-  balance: [
-    (n) => `Life outside work scored ${n} — louder than most Grade 10 profiles would admit.`,
-    (n) => `Balance hit ${n} — the "grind culture" tracks (finance, early startups, big-law) will drain you faster than they build you.`,
-    (n) => `${n} on balance means the specific company matters more than the field — some in the same field respect evenings, most don't.`,
-    (n) => `You want a real life next to the job (${n}). Not selfish — clarifying. Rule out any culture that treats it as weakness.`,
-  ],
-  creativity_val: [
-    (n) => `Making things you own scored ${n} — not managing what others make.`,
-    (n) => `${n} on creative-ownership means "manager of a creative team" won't scratch it long-term. You need to be the maker.`,
-    (n) => `You want to be the one shipping (${n}) — filter for roles where the output has your name on it.`,
-    (n) => `Creative ownership hit ${n} — a real filter. Most creative-adjacent jobs are actually creative-adjacent-management; you'd notice.`,
-  ],
-};
-
-function buildSignature(dims) {
-  const iEntries = Object.entries(dims.interests || {}).sort((a,b) => b[1] - a[1]);
-  const sEntries = Object.entries(dims.strengths || {}).sort((a,b) => b[1] - a[1]);
-  const wEntries = Object.entries(dims.weaknesses || {}).sort((a,b) => b[1] - a[1]);
-  const vEntries = Object.entries(dims.values || {}).sort((a,b) => b[1] - a[1]);
-  const [ti, ts] = [iEntries[0], sEntries[0]];
-  const [ts2] = [sEntries[1]];
-  const tw = wEntries[0];
-  const [v1, v2] = vEntries;
-  const iStrong = ti && ti[1] >= 55;
-  const sStrong = ts && ts[1] >= 55;
-  const wStrong = tw && tw[1] >= 55;
-  const seed = profileSeed(dims);
-
-  const pieces = [];
-
-  if (iStrong && sStrong) {
-    const slot = {
-      iP: phraseFor(INTEREST_PHRASE, ti[0], seed, 29) || DIM_LABELS.interests[ti[0]],
-      iN: ti[1],
-      sP: phraseFor(STRENGTH_PHRASE, ts[0], seed, 31) || DIM_LABELS.strengths[ts[0]],
-      sN: ts[1],
-      s2P: ts2 && ts2[1] >= 55 ? (phraseFor(STRENGTH_PHRASE, ts2[0], seed, 37) || DIM_LABELS.strengths[ts2[0]]) : null,
-      s2N: ts2 && ts2[1] >= 55 ? ts2[1] : null,
-    };
-    pieces.push(pickSlot(SIG_INTEREST_STRENGTH, seed, 43)(slot));
-  } else if (iStrong) {
-    pieces.push(pickSlot(SIG_INTEREST_ONLY, seed, 47)({
-      iP: phraseFor(INTEREST_PHRASE, ti[0], seed, 29) || DIM_LABELS.interests[ti[0]],
-      iN: ti[1],
-    }));
-  } else if (sStrong) {
-    pieces.push(pickSlot(SIG_STRENGTH_ONLY, seed, 53)({
-      sP: phraseFor(STRENGTH_PHRASE, ts[0], seed, 31) || DIM_LABELS.strengths[ts[0]],
-      sN: ts[1],
-    }));
-  } else {
-    pieces.push(pickSlot(SIG_NEUTRAL, seed, 59));
-  }
-
-  // Value piece — combined phrase when two top values are close & both >=60,
-  // else score-specific single-value phrase from the pool.
-  const s1 = v1?.[1] || 0, s2v = v2?.[1] || 0;
-  const close = v1 && v2 && s1 >= 60 && s2v >= 60 && (s1 - s2v) <= 15;
-
-  if (close) {
-    const combined = combinedValuePhrase(v1[0], v2[0]);
-    if (combined) { pieces.push(combined); return pieces.join(" "); }
-  }
-  if (v1 && s1 >= 55) {
-    const pool = SIG_VALUE_TAIL[v1[0]];
-    if (pool) pieces.push(pickSlot(pool, seed, 61)(s1));
-    else pieces.push(`Your top value is ${DIM_LABELS.values[v1[0]]} (${s1}).`);
-  } else if (wStrong) {
-    pieces.push(`Your loudest signal is a weakness (${DIM_LABELS.weaknesses[tw[0]]} at ${tw[1]}) — worth naming, because it will show up on the job whether you plan for it or not.`);
-  }
-
-  return pieces.join(" ");
-}
-
-// Single-value phrasings — assert what's true, don't deny what might also be
-function singleValuePhrase(v) {
-  return {
-    money: "Real financial rewards are on your list, and prominently.",
-    impact: "You want work that actually changes something for someone.",
-    freedom: "Autonomy over your day matters to you.",
-    prestige: "Being genuinely respected at the top of your field matters.",
-    stability: "A trustworthy path — not a lottery ticket — is what you want.",
-    growth: "You measure a career by what you learn as much as what you earn.",
-    balance: "Your life outside work matters as much as inside.",
-    creativity_val: "Making things you own — not just running things — is core to you.",
-  }[v] || null;
-}
-
-// When two top values are close, name both honestly
-function combinedValuePhrase(a, b) {
-  const key = [a, b].sort().join("+");
-  return {
-    "money+stability": "You want financial upside AND a paycheck you can trust — demanding but not impossible.",
-    "balance+money": "Money AND real work-life balance — most people who end up with both got the money first, then bought the balance.",
-    "balance+stability": "A safe path with real evenings — that's your shortlist.",
-    "impact+money": "Impact AND money — a narrower list, but real.",
-    "freedom+stability": "Autonomy AND predictability — you'd fit senior roles at stable companies more than raw startups.",
-    "creativity_val+prestige": "Making things AND being known for them — both take a decade, both are possible.",
-    "growth+stability": "You want to grow hard AND feel safe — established companies with strong learning cultures fit best.",
-    "freedom+money": "You want to earn well AND own your calendar — that combination usually comes after you've earned first.",
-    "growth+money": "You want to learn AND earn — you'd thrive where compensation tracks skill, not seniority.",
-    "impact+stability": "You want meaningful work AND a paycheck you can count on — medicine, teaching, and policy roles fit.",
-    "creativity_val+freedom": "You want to make things AND own your calendar — freelance and founder paths sit here.",
-    "creativity_val+money": "Making things AND getting paid well for them — a narrow but growing list (product design, senior creative director, filmmaker).",
-    "balance+impact": "Meaningful work AND real evenings — a rare combination, but not impossible in policy, teaching, or established nonprofits.",
-    "impact+prestige": "You want to be known for work that matters — not just work that pays.",
-    "growth+prestige": "Learning hard AND being recognized for it — the classic top-of-field profile.",
-    "creativity_val+growth": "You want to make things AND get better at making them every year — the craft profile.",
-    "balance+growth": "You want to grow AND still be home for dinner — established companies with real learning cultures.",
-    "balance+freedom": "You want to own your time in two directions — freelance, senior craft, and small business paths fit best.",
-    "freedom+impact": "Freedom AND meaningful work — a common founder profile, but also senior consulting and independent research.",
-    "freedom+growth": "Autonomy AND constant learning — the classic self-directed profile.",
-  }[key] || null;
 }
 
 // Behavioural patterns — enumerated dynamically from the user's actual score
@@ -7025,12 +7011,6 @@ function renderReport() {
         <h1 class="rpt-hero-headline">${esc(r.headline)}</h1>
         <div class="rpt-hero-body">
           <p class="rpt-hero-profile">${esc(r.profile)}</p>
-          ${r.signature ? `
-            <div class="rpt-hero-signature">
-              <div class="rpt-hero-signature-k">Your signature</div>
-              <div class="rpt-hero-signature-v">${esc(r.signature)}</div>
-            </div>
-          ` : ""}
         </div>
       </header>
 
