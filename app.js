@@ -583,23 +583,27 @@ function dimPhrase(label, score) {
 // a 3-point difference in one dim reliably swings to a different
 // phrase across many slots. The total unique output space is huge.
 // ============================================================
+// Every entry must be a BARE noun phrase — no leading "a", "an", or "the" —
+// so it reads cleanly in every template slot: "your ___", "toward ___",
+// "the pull is ___", "___ scored 72", "backed by ___". If you're adding a
+// variant, say it out loud after both "your" and "toward" first.
 const INTEREST_PHRASE = {
-  analytical: ["systems and patterns", "problems that need a proof", "the mechanism underneath things", "how the parts connect"],
-  creative: ["making something out of nothing", "getting ideas onto a page", "the craft of building things people feel", "creative work you own"],
-  social: ["reading a room and responding", "the messy pull of other people", "understanding what someone actually needs", "conversations that go somewhere"],
-  practical: ["shipping something you can touch", "hands-on work with real outcomes", "building things that end the day existing", "concrete artifacts, not slide decks"],
-  entrepreneurial: ["starting new things from zero", "owning the outcome, good or bad", "making a small bet that could grow", "building something that didn't exist yesterday"],
-  investigative: ["deep questions with slow answers", "getting to the bottom of things", "long-form curiosity", "the 'but why' problem people give up on"],
+  analytical: ["systems and patterns", "problems that need a proof", "mechanisms underneath things", "logic that hangs together"],
+  creative: ["making something from nothing", "getting ideas onto a page", "creative craft", "creative work you own"],
+  social: ["reading a room and responding", "people and what they need", "human dynamics", "conversations that go somewhere"],
+  practical: ["shipping something you can touch", "hands-on work with real outcomes", "concrete artifacts, not slide decks", "building things that end the day existing"],
+  entrepreneurial: ["starting new things from zero", "owning outcomes, good or bad", "small bets that could grow", "building things that didn't exist yesterday"],
+  investigative: ["deep questions with slow answers", "getting to the bottom of things", "long-form curiosity", "questions people give up on"],
 };
 const STRENGTH_PHRASE = {
   logic: ["sharp logic", "clear reasoning under pressure", "structured thinking", "analytical rigor"],
-  writing: ["disciplined writing", "clarity on the page", "written craft", "the ability to turn thought into prose"],
+  writing: ["disciplined writing", "clarity on the page", "written craft", "prose that lands"],
   speaking: ["real presence in a room", "spoken clarity", "voice that carries", "on-your-feet articulation"],
-  creativity: ["generative range", "inventive instinct", "the ability to see what isn't there yet", "creative jump"],
-  focus: ["long deep focus", "the endurance to sit with a problem", "concentration that outlasts the room", "focus most people your age don't have"],
-  leadership: ["a natural pull-others-along instinct", "leadership range", "the ability to be trusted with the room", "authority without loudness"],
-  empathy: ["real emotional attunement", "the ability to read subtle cues", "sensitivity that shows up as a skill", "sharp people-reading"],
-  hands: ["hands-on skill", "tactile intelligence", "the ability to build a thing that works", "practical craft"],
+  creativity: ["generative range", "inventive instinct", "creative vision", "creative jump"],
+  focus: ["deep focus", "endurance with a hard problem", "long concentration", "focus most people your age don't have"],
+  leadership: ["natural pull with people", "leadership range", "quiet authority", "authority without loudness"],
+  empathy: ["emotional attunement", "sharp people-reading", "sensitivity that reads as skill", "instinct for what someone needs"],
+  hands: ["hands-on skill", "tactile intelligence", "practical craft", "instinct for making things work"],
 };
 const VALUE_CLAUSE = {
   money: [
@@ -651,14 +655,17 @@ const VALUE_CLAUSE = {
     "and being the maker matters more than being the manager",
   ],
 };
+// Weakness slots appear at sentence start (via cap) and as bare objects
+// after "is ___", "in ___", "watch is ___". Keep entries as bare noun/gerund
+// phrases — no leading article — so they read cleanly in every slot.
 const WEAKNESS_PHRASE = {
   procrastination: ["putting things off until they're urgent", "leaving hard things until the last minute", "delaying the start", "avoiding the first move"],
-  focus_bad: ["losing focus fast", "attention that skitters", "difficulty staying with one thing", "the pull to check something else"],
+  focus_bad: ["losing focus fast", "attention that skitters", "difficulty staying with one thing", "restless attention"],
   conflict_avoid: ["ducking hard conversations", "smoothing over instead of naming things", "avoiding the direct ask", "swallowing what you should say"],
-  boredom: ["quitting when it stops being new", "a low tolerance for repetition", "the itch when things settle down", "restlessness with the same thing"],
-  perfectionism: ["holding onto something until it's perfect", "the trap of one more revision", "not shipping until every corner is right", "quiet fear of releasing something imperfect"],
-  detail_bad: ["missing small details", "letting little things slip past", "the last 10% that gets away", "precision that fades under fatigue"],
-  social_drain: ["needing recovery time after people", "the tank running low after a full day of humans", "social bandwidth that empties fast", "energy that peoples' attention costs"],
+  boredom: ["quitting when it stops being new", "low tolerance for repetition", "restlessness once things settle", "impatience with the same thing"],
+  perfectionism: ["holding onto work until it's perfect", "chasing one more revision", "not shipping until every corner is right", "quiet fear of releasing something imperfect"],
+  detail_bad: ["missing small details", "letting little things slip past", "losing the last 10%", "precision that fades under fatigue"],
+  social_drain: ["needing recovery time after people", "running low after a full day of humans", "social bandwidth that empties fast", "energy drain from other people's attention"],
 };
 
 // Deterministic seed drawn from actual dim scores. Two profiles with even
@@ -703,7 +710,7 @@ const REPORT_HEADLINE_TEMPLATES = [
   ({iP, sP, vC, iN, sN}) => `Between your pull toward ${iP} (${iN}) and your ${sP} (${sN}), the shape of your career is already visible — ${vC}.`,
   ({iP, sP, vC, iN, sN}) => `Two numbers tell your story: ${iP} at ${iN}, and ${sP} at ${sN}. ${cap(vC)}.`,
   ({iP, sP, vC, iN, sN}) => `You're built for work involving ${iP} (${iN}) — your ${sP} (${sN}) makes it more than a preference, it's leverage. ${cap(vC)}.`,
-  ({iP, sP, vC, iN, sN}) => `Your ${iP} pull scored ${iN}, and your ${sP} scored ${sN} — the interest is real AND you have the raw material to act on it. ${cap(vC)}.`,
+  ({iP, sP, vC, iN, sN}) => `Your pull toward ${iP} scored ${iN}, and your ${sP} scored ${sN} — the interest is real AND you have the raw material to act on it. ${cap(vC)}.`,
   ({iP, sP, vC, iN, sN}) => `${cap(sP)} (${sN}) plus ${iP} (${iN}) — that pair puts you on a shortlist most Grade 10 profiles don't reach. ${cap(vC)}.`,
   ({iP, sP, vC, iN, sN}) => `Read your quizzes together and one line falls out: ${iP} (${iN}) as the interest, ${sP} (${sN}) as the strength, ${vC.replace(/^and /, "")} as the aim.`,
 ];
@@ -4704,19 +4711,37 @@ function buildDayRead({ good, bad, neutral, total, goodRatio, badRatio, belowRan
 
 function buildLocalReport() {
   const dims = scoreDimensions();
+  // Not-interested penalty: each dismissed career applies -15 to every
+  // remaining career in the same subgroup. Cluster hate compounds naturally.
+  const DISMISS_SIBLING_PENALTY = 15;
+  const dismissed = new Set(state.dismissedCareers || []);
+  const subgroupDismissCount = {};
+  for (const id of dismissed) {
+    const c = CAREERS.find(x => x.id === id);
+    if (!c) continue;
+    const key = c.subgroup || c.group;
+    subgroupDismissCount[key] = (subgroupDismissCount[key] || 0) + 1;
+  }
   // Locked careers (no sim yet, no CAREER_FIT tuning) score a flat 50 — exclude
   // them from every ranking, otherwise they pollute "actual jobs" and "avoid".
+  // Then apply dismiss-penalty and filter out dismissed careers themselves.
   const scored = CAREERS.filter(c => SIM_READY.has(c.id))
-    .map(c => ({ ...c, fit: fitCareer(c.id, dims) }))
+    .map(c => {
+      const rawFit = fitCareer(c.id, dims);
+      const penalty = (subgroupDismissCount[c.subgroup || c.group] || 0) * DISMISS_SIBLING_PENALTY;
+      return { ...c, fit: Math.max(0, rawFit - penalty), rawFit, dismissed: dismissed.has(c.id) };
+    })
+    .filter(c => !c.dismissed)
     .sort((a, b) => b.fit - a.fit);
   const avoid = scored.filter(c => c.fit < 55).slice(-3).reverse();
 
-  const enrichedTop = scored.slice(0, 5).map(c => {
+  const enrichedTop = scored.slice(0, 6).map(c => {
     const ins = CAREER_INSIGHTS[c.id] || (() => {
       const g = GENERIC_INSIGHTS_BY_GROUP[c.group] || GENERIC_INSIGHTS_BY_GROUP["Business & Money"];
       return { reality: g.reality(c.label), fitFor: g.fitFor(c.label), dos: g.dos, donts: g.donts };
     })();
     return {
+      id: c.id,
       career: c.label,
       group: c.group,
       subgroup: c.subgroup || c.group,
@@ -4750,6 +4775,10 @@ function buildLocalReport() {
     contrasts,
     topFields: getTopFields(scored),
     topCareers: enrichedTop,
+    dismissedCareers: [...dismissed].map(id => {
+      const c = CAREERS.find(x => x.id === id);
+      return c ? { id: c.id, career: c.label, subgroup: c.subgroup || c.group } : null;
+    }).filter(Boolean),
     avoid: avoid.map(c => ({ career: c.label, why: whyAvoid(c.id, dims), group: c.group })),
     superpowers: getSuperpowers(dims),
     watchouts: getWatchouts(dims),
@@ -4941,7 +4970,7 @@ const SIG_INTEREST_STRENGTH = [
 ];
 const SIG_INTEREST_ONLY = [
   ({iP, iN}) => `You're drawn to ${iP} (${iN}) — the interest is real, but the strengths to power it haven't yet cleared the middle.`,
-  ({iP, iN}) => `Your ${iP} pull scored ${iN}. What's missing is the strength to convert it — that's your next thing to build.`,
+  ({iP, iN}) => `Your pull toward ${iP} scored ${iN}. What's missing is the strength to convert it — that's your next thing to build.`,
   ({iP, iN}) => `${cap(iP)} (${iN}) is loud in your quizzes; the strengths quiz was quieter. The interest is the compass; you need to sharpen a strength to move.`,
 ];
 const SIG_STRENGTH_ONLY = [
@@ -5417,6 +5446,11 @@ const state = {
   quizAnswers: store.get(dataKey("quizAnswers", _initEmail), {}),
   completedSims: store.get(dataKey("sims", _initEmail), []),
   report: store.get(dataKey("report", _initEmail), null),
+  // Careers the user marked "Not interested." Devalues subgroup siblings by
+  // DISMISS_SIBLING_PENALTY per dismissal so a whole cluster naturally drops
+  // out of the top-6 after 1-2 dismissals. Persisted so it survives reloads.
+  dismissedCareers: store.get(dataKey("dismissed", _initEmail), []),
+  showHiddenCareers: false,
 
   // ephemeral
   currentQuiz: null,
@@ -5459,6 +5493,7 @@ function persist() {
   store.set(dataKey("quizAnswers", email), state.quizAnswers);
   store.set(dataKey("sims", email), state.completedSims);
   store.set(dataKey("report", email), state.report);
+  store.set(dataKey("dismissed", email), state.dismissedCareers);
 }
 
 // Called on successful login — swap current data with the user's saved data
@@ -5466,6 +5501,7 @@ function loadAccountData(email) {
   state.quizAnswers = store.get(dataKey("quizAnswers", email), {});
   state.completedSims = store.get(dataKey("sims", email), []);
   state.report = store.get(dataKey("report", email), null);
+  state.dismissedCareers = store.get(dataKey("dismissed", email), []);
 }
 
 // Transient bottom-of-screen note (e.g. support email). Non-blocking, auto-dismisses.
@@ -6920,6 +6956,22 @@ function compassFitTag(fit) {
   return { cls: "stretch", label: "STRETCH" };
 }
 
+// Snapshot tiles — 3-second overview at the top of the report.
+// Derived from data already in `r`; no new scoring needed.
+function buildSnapshotTiles(r) {
+  const tiles = [];
+  const barFrom = (key) => r.quizBreakdown?.find(q => q.key === key)?.bars?.[0] || null;
+  const iTop = barFrom("interests");
+  if (iTop) tiles.push({ k: "Top interest", v: `${iTop.score}%`, name: iTop.label });
+  const sTop = barFrom("strengths");
+  if (sTop) tiles.push({ k: "Top strength", v: `${sTop.score}%`, name: sTop.label });
+  const vTop = barFrom("values");
+  if (vTop) tiles.push({ k: "Top value", v: `${vTop.score}%`, name: vTop.label });
+  const cTop = r.topCareers?.[0];
+  if (cTop) tiles.push({ k: "Best-fit career", v: `${cTop.fit}%`, name: cTop.career });
+  return tiles;
+}
+
 function renderReport() {
   if (state.reportLoading) {
     return `
@@ -6943,228 +6995,305 @@ function renderReport() {
       </div>
     `;
   }
+
+  const snapshotTiles = buildSnapshotTiles(r);
+  const showSim = !!r.simInsights;
+  const showQuiz = r.quizBreakdown && r.quizBreakdown.length;
+  const showPattern = (r.patterns && r.patterns.length) || (r.contrasts && r.contrasts.length);
+  const showAvoid = r.avoid && r.avoid.length;
+
   return `
     ${renderNav()}
     <div class="container wide rise">
       <button class="back-link" data-action="go" data-screen="dashboard">← BACK TO DASHBOARD</button>
 
-      <div class="report-header">
-        <div class="mono" style="font-size:12px;color:var(--brand);letter-spacing:1.5px;margin-bottom:12px;">
-          THE CAREER COMPASS REPORT
-        </div>
-        <h1 class="report-title">${esc(r.headline)}</h1>
-        <p class="sub-text" style="max-width:640px;font-size:18px;">${esc(r.profile)}</p>
-        ${r.signature ? `
-          <div style="margin-top:26px;padding:22px 26px;border-left:3px solid var(--brand);background:var(--brand-soft);border-radius:0 12px 12px 0;">
-            <div class="mono" style="font-size:11px;color:var(--brand-ink);letter-spacing:1px;margin-bottom:8px;">YOUR SIGNATURE</div>
-            <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:22px;line-height:1.35;letter-spacing:-0.3px;color:var(--brand-ink);">${esc(r.signature)}</div>
-          </div>
-        ` : ""}
-      </div>
+      <!-- Sticky pill nav -->
+      <nav class="rpt-nav">
+        <a href="#rpt-snapshot" class="rpt-nav-item">Snapshot</a>
+        <a href="#rpt-matches" class="rpt-nav-item">Matches</a>
+        <a href="#rpt-playbook" class="rpt-nav-item">Playbook</a>
+        ${showAvoid ? '<a href="#rpt-avoid" class="rpt-nav-item">Avoid</a>' : ""}
+        ${showSim ? '<a href="#rpt-sim" class="rpt-nav-item">Sim signal</a>' : ""}
+        ${showQuiz ? '<a href="#rpt-evidence" class="rpt-nav-item">Evidence</a>' : ""}
+        ${showPattern ? '<a href="#rpt-pattern" class="rpt-nav-item">Pattern</a>' : ""}
+        <a href="#rpt-plan" class="rpt-nav-item">Plan</a>
+      </nav>
 
-      <!-- Compass radar -->
-      ${r.compass && r.compass.length ? `
-        <div class="compass-viz card">
-          <div class="compass-viz-chart">
-            ${renderCompassRadar(r.compass)}
-          </div>
-          <div class="compass-viz-fits">
-            <div class="mono" style="font-size:11px;color:var(--brand);letter-spacing:1px;margin-bottom:4px;">YOUR TOP MATCHES</div>
-            ${(r.compassFits || []).map(f => {
-              const t = compassFitTag(f.fit);
-              return `
-                <div class="compass-fit">
-                  <div class="compass-fit-score">${f.fit}</div>
-                  <div class="compass-fit-body">
-                    <div class="compass-fit-name">${esc(f.career)}</div>
-                    <div class="compass-fit-tag ${t.cls}">${t.label}</div>
-                    <div class="compass-fit-why">${esc(f.why)}</div>
-                  </div>
-                </div>
-              `;
-            }).join("")}
-          </div>
+      <!-- Hero -->
+      <header class="rpt-hero">
+        <div class="rpt-hero-eyebrow">The Career Compass · Your Report</div>
+        <h1 class="rpt-hero-headline">${esc(r.headline)}</h1>
+        <div class="rpt-hero-body">
+          <p class="rpt-hero-profile">${esc(r.profile)}</p>
+          ${r.signature ? `
+            <div class="rpt-hero-signature">
+              <div class="rpt-hero-signature-k">Your signature</div>
+              <div class="rpt-hero-signature-v">${esc(r.signature)}</div>
+            </div>
+          ` : ""}
+        </div>
+      </header>
+
+      <!-- 3-second snapshot tiles -->
+      ${snapshotTiles.length ? `
+        <div class="rpt-snap">
+          ${snapshotTiles.map(t => `
+            <div class="rpt-snap-tile">
+              <div class="rpt-snap-k">${esc(t.k)}</div>
+              <div class="rpt-snap-v">${esc(t.v)}</div>
+              <div class="rpt-snap-name">${esc(t.name)}</div>
+            </div>
+          `).join("")}
         </div>
       ` : ""}
 
-      <!-- Superpowers + Watchouts -->
-      <div class="super-grid">
-        <div class="card super-card green">
-          <div class="mono" style="font-size:11px;color:var(--green);letter-spacing:1px;margin-bottom:12px;">YOUR SUPERPOWERS</div>
-          ${r.superpowers.map(s => `<div class="super-item"><span class="text-green" style="margin-right:6px;">★</span>${esc(s)}</div>`).join("")}
+      <!-- § Snapshot: superpowers | watchouts -->
+      <section class="rpt-section" id="rpt-snapshot">
+        <div class="rpt-section-head">
+          <div class="rpt-section-kicker">Snapshot</div>
+          <h2 class="rpt-section-title">What to know first about you.</h2>
+          <p class="rpt-section-lead">The clearest signals from your quizzes — strengths to lean into, friction to plan around.</p>
         </div>
-        <div class="card super-card amber">
-          <div class="mono" style="font-size:11px;color:var(--amber);letter-spacing:1px;margin-bottom:12px;">WATCH OUT FOR</div>
-          ${r.watchouts.map(s => `<div class="super-item"><span class="text-amber" style="margin-right:6px;">⚠</span>${esc(s)}</div>`).join("")}
+        <div class="rpt-strengths">
+          <div class="rpt-strengths-col green">
+            <div class="rpt-strengths-lbl">★ Superpowers</div>
+            <ul class="rpt-strengths-list">
+              ${r.superpowers.map(s => `<li>${esc(s)}</li>`).join("")}
+            </ul>
+          </div>
+          <div class="rpt-strengths-col amber">
+            <div class="rpt-strengths-lbl">⚠ Watch-outs</div>
+            <ul class="rpt-strengths-list">
+              ${r.watchouts.map(s => `<li>${esc(s)}</li>`).join("")}
+            </ul>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Quiz results breakdown — what the tests actually said -->
-      ${r.quizBreakdown && r.quizBreakdown.length ? `
-        <div class="mb-lg">
-          <h2 class="lin-h lin-h2" style="margin-bottom:16px;">What the five quizzes actually said.</h2>
-          <p class="sub-text" style="max-width:640px;font-size:15px;margin-bottom:24px;">Before the career recommendations, here's the raw signal — dimension by dimension, from your own answers.</p>
-          <div class="stack-md">
-            ${r.quizBreakdown.map((s, i) => `
-              <div class="card" style="padding:26px;">
-                <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:14px;flex-wrap:wrap;">
-                  <span class="mono" style="font-size:11px;color:var(--faint);letter-spacing:0.5px;">0${i+1} · QUIZ ${i+1} OF 5</span>
+      <!-- § Matches: compass viz + top 3 -->
+      ${r.compass && r.compass.length ? `
+        <section class="rpt-section" id="rpt-matches">
+          <div class="rpt-section-head">
+            <div class="rpt-section-kicker">Where you fit</div>
+            <h2 class="rpt-section-title">Your compass, and the careers that match its shape.</h2>
+            <p class="rpt-section-lead">Every axis is averaged from multiple quiz signals — the shape is more reliable than any single score.</p>
+          </div>
+          <div class="compass-viz card">
+            <div class="compass-viz-chart">
+              ${renderCompassRadar(r.compass)}
+            </div>
+            <div class="compass-viz-fits">
+              <div class="mono" style="font-size:11px;color:var(--brand);letter-spacing:.14em;margin-bottom:4px;text-transform:uppercase;">Top matches</div>
+              ${(r.compassFits || []).map(f => {
+                const t = compassFitTag(f.fit);
+                return `
+                  <div class="compass-fit">
+                    <div class="compass-fit-score">${f.fit}</div>
+                    <div class="compass-fit-body">
+                      <div class="compass-fit-name">${esc(f.career)}</div>
+                      <div class="compass-fit-tag ${t.cls}">${t.label}</div>
+                      <div class="compass-fit-why">${esc(f.why)}</div>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        </section>
+      ` : ""}
+
+      <!-- § Playbook: the 6 top careers -->
+      <section class="rpt-section" id="rpt-playbook">
+        <div class="rpt-section-head">
+          <div class="rpt-section-kicker">The playbook</div>
+          <h2 class="rpt-section-title">Six real jobs — with the honest read on each.</h2>
+          <p class="rpt-section-lead">Fit score weighs your interests, strengths, values, and every career you've dismissed.</p>
+        </div>
+        <div class="rpt-careers">
+          ${r.topCareers.map((c, i) => {
+            const fitCls = c.fit >= 75 ? "high" : c.fit >= 60 ? "mid" : "";
+            return `
+              <article class="rpt-career">
+                <div class="rpt-career-hdr">
+                  <div class="rpt-career-num">#${i+1}</div>
+                  <div class="rpt-career-title-wrap">
+                    <h3 class="rpt-career-title">${esc(c.career)}</h3>
+                    <div class="rpt-career-tag">${esc(c.subgroup || c.group)}</div>
+                  </div>
+                  <div class="rpt-career-fitpill ${fitCls}">${c.fit}% fit</div>
                 </div>
-                <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:26px;letter-spacing:-0.3px;line-height:1.15;margin-bottom:10px;">${esc(s.title)}</div>
-                <div style="font-size:15px;line-height:1.6;color:var(--ink-soft);margin-bottom:${s.bars || s.picks ? "18px" : "0"};">${esc(s.lead)}</div>
-                ${s.bars && s.bars.length ? `
-                  <div class="stack-sm" style="margin-bottom:18px;">
-                    ${s.bars.map(b => `
-                      <div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                          <span style="font-size:14px;font-weight:600;">${esc(b.label)}</span>
-                          <span class="mono" style="font-size:12px;color:var(--sub);">${b.score}% · ${esc(b.band)}</span>
-                        </div>
-                        <div style="height:6px;background:var(--bg-alt);border-radius:999px;overflow:hidden;">
-                          <div style="height:100%;width:${b.score}%;background:${b.band === 'very strong' || b.band === 'strong' ? 'var(--grad-brand)' : b.band === 'moderate' ? 'var(--grad-warm)' : 'var(--sub)'};"></div>
-                        </div>
+                <div class="rpt-career-why">${esc(c.why)}</div>
+                ${c.reality ? `<div class="rpt-career-reality"><strong>Reality:</strong> ${esc(c.reality)}</div>` : ""}
+                ${(c.dos && c.dos.length) || (c.donts && c.donts.length) ? `
+                  <div class="rpt-career-panels">
+                    ${c.dos && c.dos.length ? `
+                      <div class="rpt-career-panel dos">
+                        <div class="rpt-career-panel-lbl">Do</div>
+                        <ul>${c.dos.map(d => `<li>${esc(d)}</li>`).join("")}</ul>
                       </div>
-                    `).join("")}
+                    ` : ""}
+                    ${c.donts && c.donts.length ? `
+                      <div class="rpt-career-panel donts">
+                        <div class="rpt-career-panel-lbl">Don't</div>
+                        <ul>${c.donts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>
+                      </div>
+                    ` : ""}
+                  </div>
+                ` : ""}
+                <div class="rpt-career-dismiss">
+                  <button class="btn btn-ghost" data-action="dismiss-career" data-career-id="${esc(c.id)}" style="font-size:12px;padding:6px 12px;color:var(--sub);">Not interested — hide + devalue similar</button>
+                </div>
+              </article>
+            `;
+          }).join("")}
+        </div>
+        ${r.dismissedCareers && r.dismissedCareers.length ? `
+          <div class="rpt-dismissed">
+            <div><strong>${r.dismissedCareers.length} hidden</strong> — ${r.dismissedCareers.map(d => esc(d.career)).join(", ")}</div>
+            <button class="btn btn-ghost" data-action="restore-dismissed" style="font-size:12px;padding:6px 12px;">Restore all</button>
+          </div>
+        ` : ""}
+      </section>
+
+      <!-- § Avoid -->
+      ${showAvoid ? `
+        <section class="rpt-section" id="rpt-avoid">
+          <div class="rpt-section-head">
+            <div class="rpt-section-kicker">Save the years</div>
+            <h2 class="rpt-section-title">Careers that would grind you down.</h2>
+            <p class="rpt-section-lead">Lowest-fit fields from the same scoring — worth naming so you don't drift into them by default.</p>
+          </div>
+          <div class="rpt-avoid">
+            ${r.avoid.map(a => `
+              <div class="rpt-avoid-row">
+                <div class="rpt-avoid-name"><span class="x">×</span>${esc(a.career)}<span class="tag">${esc(a.group || "")}</span></div>
+                <div class="rpt-avoid-why">${esc(a.why)}</div>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      ` : ""}
+
+      <!-- § Sim insights -->
+      ${showSim ? `
+        <section class="rpt-section" id="rpt-sim">
+          <div class="rpt-section-head">
+            <div class="rpt-section-kicker">Behavioural signal</div>
+            <h2 class="rpt-section-title">What your simulations added.</h2>
+            <p class="rpt-section-lead">Not just what you said — what you did when the scenarios got hard.</p>
+          </div>
+          <div class="rpt-sim">
+            <div class="rpt-sim-stats">
+              <div>
+                <div class="rpt-sim-stat-k">Simulated</div>
+                <div class="rpt-sim-stat-v">${r.simInsights.count}</div>
+              </div>
+              <div>
+                <div class="rpt-sim-stat-k">Average fit</div>
+                <div class="rpt-sim-stat-v">${r.simInsights.average}</div>
+              </div>
+              <div>
+                <div class="rpt-sim-stat-k">Best fit</div>
+                <div class="rpt-sim-stat-v name">${esc(r.simInsights.best)}</div>
+              </div>
+            </div>
+            <div class="rpt-sim-read">${esc(r.simInsights.read)}</div>
+          </div>
+        </section>
+      ` : ""}
+
+      <!-- § Evidence: quiz breakdown -->
+      ${showQuiz ? `
+        <section class="rpt-section" id="rpt-evidence">
+          <div class="rpt-section-head">
+            <div class="rpt-section-kicker">The evidence</div>
+            <h2 class="rpt-section-title">What the five quizzes actually said.</h2>
+            <p class="rpt-section-lead">Dimension by dimension, from your own answers — the raw signal behind every recommendation above.</p>
+          </div>
+          <div class="rpt-quizzes">
+            ${r.quizBreakdown.map((s, i) => `
+              <div class="rpt-quiz">
+                <div class="rpt-quiz-hdr">
+                  <div class="rpt-quiz-title">${esc(s.title)}</div>
+                  <div class="rpt-quiz-num">0${i+1} · Quiz ${i+1} of ${r.quizBreakdown.length}</div>
+                </div>
+                <div class="rpt-quiz-lead">${esc(s.lead)}</div>
+                ${s.bars && s.bars.length ? `
+                  <div class="rpt-quiz-bars">
+                    ${s.bars.map(b => {
+                      const cls = b.score >= 60 ? "high" : b.score >= 45 ? "mid" : "low";
+                      return `
+                        <div>
+                          <div class="rpt-quiz-bar-hdr">
+                            <span class="rpt-quiz-bar-lbl">${esc(b.label)}</span>
+                            <span class="rpt-quiz-bar-num">${b.score}%<span class="band">${esc(b.band)}</span></span>
+                          </div>
+                          <div class="rpt-quiz-bar-track">
+                            <div class="rpt-quiz-bar-fill ${cls}" style="width:${b.score}%;"></div>
+                          </div>
+                        </div>
+                      `;
+                    }).join("")}
                   </div>
                 ` : ""}
                 ${s.picks && s.picks.length ? `
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+                  <div class="rpt-quiz-picks">
                     ${s.picks.map(p => `<span class="badge badge-brand">${esc(p)}</span>`).join("")}
                   </div>
                 ` : ""}
-                <div style="padding:14px 16px;background:var(--bg-alt);border-radius:10px;border-left:3px solid var(--brand);">
-                  <div class="mono" style="font-size:10.5px;color:var(--brand);letter-spacing:0.8px;margin-bottom:6px;">WHAT THIS MEANS</div>
-                  <div style="font-size:14px;line-height:1.6;color:var(--ink-soft);">${esc(s.takeaway)}</div>
+                <div class="rpt-quiz-take">
+                  <span class="rpt-quiz-take-lbl">Takeaway</span>${esc(s.takeaway)}
                 </div>
               </div>
             `).join("")}
           </div>
-        </div>
+        </section>
       ` : ""}
 
-      <!-- Patterns -->
-      ${r.patterns && r.patterns.length ? `
-        <div class="mb-lg">
-          <h2 class="lin-h lin-h2" style="margin-bottom:16px;">What your answers keep telling us.</h2>
-          <div class="stack-md">
-            ${r.patterns.map(p => `
-              <div class="card" style="padding:22px;">
-                <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:22px;letter-spacing:-0.3px;line-height:1.2;margin-bottom:8px;">${esc(p.title)}</div>
-                <div style="font-size:14.5px;color:var(--sub);line-height:1.65;">${esc(p.detail)}</div>
-              </div>
-            `).join("")}
+      <!-- § Pattern: patterns + contrasts -->
+      ${showPattern ? `
+        <section class="rpt-section" id="rpt-pattern">
+          <div class="rpt-section-head">
+            <div class="rpt-section-kicker">The pattern</div>
+            <h2 class="rpt-section-title">How your answers keep pointing.</h2>
+            <p class="rpt-section-lead">Threads that showed up across multiple quizzes — the shape of you at a distance.</p>
           </div>
-        </div>
-      ` : ""}
-
-      <!-- Contrasts / tensions -->
-      ${r.contrasts && r.contrasts.length ? `
-        <div class="mb-lg">
-          <h2 class="lin-h lin-h2" style="margin-bottom:16px;">You want two things that don't obviously coexist.</h2>
-          <div class="stack-sm">
-            ${r.contrasts.map(c => `
-              <div class="card" style="padding:20px 22px;border-left:3px solid var(--amber);background:var(--amber-soft);">
-                <div style="font-size:14.5px;line-height:1.6;color:var(--ink);">${esc(c)}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-      <!-- Top careers with do's/don'ts inline -->
-      <div class="mb-lg">
-        <h2 class="lin-h lin-h2" style="margin-bottom:16px;">Actual jobs — with the honest playbook.</h2>
-        <div class="stack-lg">
-          ${r.topCareers.map((c, i) => `
-            <div class="card" style="padding:26px;">
-              <div class="row-between mb-md" style="gap:16px;align-items:flex-start;">
-                <div>
-                  <div class="mono" style="font-size:11px;color:var(--faint);letter-spacing:0.5px;margin-bottom:6px;">#${i+1} · ${esc(c.subgroup || c.group)}</div>
-                  <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:28px;letter-spacing:-0.4px;line-height:1.1;">${esc(c.career)}</div>
+          ${r.patterns && r.patterns.length ? `
+            <div class="rpt-patterns">
+              ${r.patterns.map(p => `
+                <div class="rpt-pattern">
+                  <div class="rpt-pattern-t">${esc(p.title)}</div>
+                  <div class="rpt-pattern-d">${esc(p.detail)}</div>
                 </div>
-                <span class="badge ${c.fit >= 75 ? "badge-good" : c.fit >= 60 ? "badge-warn" : ""}" style="font-size:13px;padding:6px 10px;">${c.fit}% fit</span>
-              </div>
-              <div style="font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin-bottom:16px;">${esc(c.why)}</div>
-              ${c.reality ? `
-                <div style="font-size:13.5px;color:var(--sub);line-height:1.6;padding:14px 16px;background:var(--bg-alt);border-radius:10px;margin-bottom:16px;">
-                  <span style="font-weight:600;color:var(--ink);">Reality:</span> ${esc(c.reality)}
-                </div>
-              ` : ""}
-              ${(c.dos && c.dos.length) || (c.donts && c.donts.length) ? `
-                <div class="super-grid" style="gap:12px;">
-                  ${c.dos && c.dos.length ? `
-                    <div style="padding:14px 16px;background:var(--green-soft);border-radius:10px;">
-                      <div class="mono" style="font-size:10.5px;color:var(--green);letter-spacing:1px;margin-bottom:8px;">DO</div>
-                      ${c.dos.map(d => `<div style="font-size:13px;line-height:1.5;margin-bottom:6px;color:var(--ink);"><span class="text-green" style="font-weight:700;margin-right:6px;">✓</span>${esc(d)}</div>`).join("")}
-                    </div>
-                  ` : ""}
-                  ${c.donts && c.donts.length ? `
-                    <div style="padding:14px 16px;background:var(--red-soft);border-radius:10px;">
-                      <div class="mono" style="font-size:10.5px;color:var(--red);letter-spacing:1px;margin-bottom:8px;">DON'T</div>
-                      ${c.donts.map(d => `<div style="font-size:13px;line-height:1.5;margin-bottom:6px;color:var(--ink);"><span class="text-red" style="font-weight:700;margin-right:6px;">×</span>${esc(d)}</div>`).join("")}
-                    </div>
-                  ` : ""}
-                </div>
-              ` : ""}
+              `).join("")}
             </div>
-          `).join("")}
-        </div>
-      </div>
-
-      <!-- Avoid -->
-      ${r.avoid && r.avoid.length ? `
-        <div class="mb-lg">
-          <h2 class="lin-h lin-h2" style="margin-bottom:16px;">Save yourself the years.</h2>
-          <div class="card card-flat">
-            ${r.avoid.map(a => `
-              <div style="padding:16px 20px;border-bottom:1px solid var(--line);">
-                <div style="font-weight:600;font-size:15.5px;margin-bottom:4px;">× ${esc(a.career)} <span style="color:var(--faint);font-size:12px;font-weight:400;margin-left:6px;">${esc(a.group || "")}</span></div>
-                <div style="font-size:13.5px;color:var(--sub);line-height:1.55;">${esc(a.why)}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
+          ` : ""}
+          ${r.contrasts && r.contrasts.length ? `
+            <div class="rpt-tensions">
+              ${r.contrasts.map(c => `
+                <div class="rpt-tension"><span class="rpt-tension-k">Tension</span>${esc(c)}</div>
+              `).join("")}
+            </div>
+          ` : ""}
+        </section>
       ` : ""}
 
-      <!-- Sim insights, if any -->
-      ${r.simInsights ? `
-        <div class="mb-lg">
-          <h2 class="lin-h lin-h2" style="margin-bottom:16px;">Behavioural signal, not just quiz answers.</h2>
-          <div class="card" style="padding:24px;">
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line);">
-              <div>
-                <div class="mono" style="font-size:11px;color:var(--sub);letter-spacing:0.5px;margin-bottom:6px;">SIMULATED</div>
-                <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:28px;letter-spacing:-0.4px;line-height:1;">${r.simInsights.count}</div>
-              </div>
-              <div>
-                <div class="mono" style="font-size:11px;color:var(--sub);letter-spacing:0.5px;margin-bottom:6px;">AVERAGE FIT</div>
-                <div class="fit-score ${scoreClass(r.simInsights.average)}" style="font-size:28px;width:auto;">${r.simInsights.average}</div>
-              </div>
-              <div>
-                <div class="mono" style="font-size:11px;color:var(--sub);letter-spacing:0.5px;margin-bottom:6px;">BEST FIT SO FAR</div>
-                <div style="font-family:var(--font-sans);font-weight:700;letter-spacing:-0.02em;font-size:20px;letter-spacing:-0.2px;line-height:1.2;">${esc(r.simInsights.best)}</div>
-              </div>
-            </div>
-            <div style="font-size:15px;line-height:1.65;color:var(--ink-soft);">${esc(r.simInsights.read)}</div>
+      <!-- § Plan -->
+      <section class="rpt-section rpt-plan" id="rpt-plan">
+        <div class="rpt-section-head">
+          <div class="rpt-section-kicker">Next 6 months</div>
+          <h2 class="rpt-section-title">Test your fit for real.</h2>
+          <p class="rpt-section-lead">Concrete moves — small enough to start this month, real enough to tell you something.</p>
+        </div>
+        ${r.sixMonthPlan.map((p, i) => `
+          <div class="rpt-plan-item">
+            <div class="rpt-plan-num">${i + 1}</div>
+            <div class="rpt-plan-text">${esc(p)}</div>
           </div>
-        </div>
-      ` : ""}
+        `).join("")}
+      </section>
 
-      <!-- Six month plan -->
-      <div class="mb-lg">
-        <div style="padding:32px 0;">
-          <div class="mono" style="font-size:12px;color:var(--brand);letter-spacing:1px;margin-bottom:10px;">YOUR NEXT 6 MONTHS</div>
-          <h2 class="lin-h lin-h2" style="margin:0 0 20px;">Try this to test your fit for real.</h2>
-          ${r.sixMonthPlan.map((p, i) => `
-            <div class="plan-item">
-              <span class="plan-num">${i + 1}</span>
-              <div class="plan-text">${esc(p)}</div>
-            </div>
-          `).join("")}
-        </div>
-      </div>
-
-      <div class="row" style="padding-top:20px;border-top:1px solid var(--line);">
+      <div class="rpt-actions">
         <button class="btn btn-primary" data-action="go" data-screen="careers">Try more careers →</button>
         <button class="btn btn-ghost" data-action="regenerate-report">Regenerate report</button>
         <button class="btn btn-ghost" data-action="print">Print / save PDF</button>
@@ -8264,6 +8393,21 @@ document.addEventListener("click", (e) => {
   else if (action === "sim-retry") { startSim(state.currentCareer); }
   else if (action === "generate-report") { generateReport(); }
   else if (action === "regenerate-report") { state.report = null; generateReport(); }
+  else if (action === "dismiss-career") {
+    const id = btn.dataset.careerId;
+    if (id && !state.dismissedCareers.includes(id)) {
+      state.dismissedCareers = [...state.dismissedCareers, id];
+      state.report = buildLocalReport();
+      persist();
+      render();
+    }
+  }
+  else if (action === "restore-dismissed") {
+    state.dismissedCareers = [];
+    state.report = buildLocalReport();
+    persist();
+    render();
+  }
   else if (action === "print") { window.print(); }
 });
 
