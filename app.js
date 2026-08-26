@@ -5523,23 +5523,45 @@ function applyTheme() {
 // ============================================================
 // LLM
 // ============================================================
-async function askClaude(messages, system, maxTokens = 1200) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: maxTokens,
-      system,
-      messages,
-    }),
-  });
-  const data = await res.json();
-  const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  return JSON.parse(clean.slice(start, end + 1));
+// Paste your FREE-TIER Gemini API key here to enable AI-enhanced reports.
+// The key ships inside this client-side script, so anyone who loads the page
+// can read it. Keep this project on the free tier — never enable billing on
+// the Google Cloud project this key belongs to, or a scraper could spend
+// real money. When the free quota is exhausted (HTTP 429) or the call fails
+// for any other reason, `generateReport` silently falls back to the local
+// deterministic report — no user-visible error, no cost. Leave as "" to
+// skip Gemini entirely.
+const GEMINI_API_KEY = "";
+const GEMINI_MODEL = "gemini-3.6-flash";
+
+async function askGemini(prompt, system, timeoutMs = 20000) {
+  if (!GEMINI_API_KEY) throw new Error("gemini: no api key configured");
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: ctrl.signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
+      }),
+    });
+    if (!res.ok) throw new Error(`gemini http ${res.status}`);
+    const data = await res.json();
+    const text = (data?.candidates?.[0]?.content?.parts || [])
+      .map((p) => p.text).filter(Boolean).join("");
+    const clean = text.replace(/```json|```/g, "").trim();
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
+    if (start < 0 || end < 0) throw new Error("gemini: no json in response");
+    return JSON.parse(clean.slice(start, end + 1));
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ============================================================
@@ -8187,6 +8209,36 @@ async function finishSim() {
   render();
 }
 
+// Fold Gemini's prose onto the local report skeleton. Local carries the
+// deterministic pieces the UI needs (compass, quizBreakdown, patterns,
+// contrasts, simInsights, per-career reality/dos/donts). Gemini overrides
+// the fields it produces; anything it omits or malforms stays local.
+function mergeAiIntoLocal(local, ai) {
+  const out = { ...local };
+  const str = (v) => (typeof v === "string" && v.trim()) ? v.trim() : null;
+  if (str(ai.headline)) out.headline = str(ai.headline);
+  if (str(ai.profile)) out.profile = str(ai.profile);
+  if (Array.isArray(ai.superpowers) && ai.superpowers.length) out.superpowers = ai.superpowers.map(String);
+  if (Array.isArray(ai.watchouts) && ai.watchouts.length) out.watchouts = ai.watchouts.map(String);
+  if (Array.isArray(ai.sixMonthPlan) && ai.sixMonthPlan.length) out.sixMonthPlan = ai.sixMonthPlan.map(String);
+  if (Array.isArray(ai.topFields) && ai.topFields.length) out.topFields = ai.topFields;
+  if (Array.isArray(ai.topCareers) && Array.isArray(out.topCareers)) {
+    const aiWhy = new Map(ai.topCareers.filter(c => c && c.career).map(c => [String(c.career).toLowerCase(), c.why]));
+    out.topCareers = out.topCareers.map(c => {
+      const w = str(aiWhy.get(String(c.career).toLowerCase()));
+      return w ? { ...c, why: w } : c;
+    });
+  }
+  if (Array.isArray(ai.avoid) && Array.isArray(out.avoid)) {
+    const aiAvoid = new Map(ai.avoid.filter(a => a && a.career).map(a => [String(a.career).toLowerCase(), a.why]));
+    out.avoid = out.avoid.map(a => {
+      const w = str(aiAvoid.get(String(a.career).toLowerCase()));
+      return w ? { ...a, why: w } : a;
+    });
+  }
+  return out;
+}
+
 async function generateReport() {
   const quizzesDone = QUIZZES.filter(q => Object.keys(state.quizAnswers[q.key] || {}).length === q.items.length).length;
   if (quizzesDone < 5) {
@@ -8197,9 +8249,22 @@ async function generateReport() {
   state.reportLoading = true;
   state.reportError = null;
   render();
-  await new Promise((r) => setTimeout(r, 900));
   try {
-    state.report = buildLocalReport();
+    const local = buildLocalReport();
+    let ai = null;
+    try {
+      ai = await askGemini(
+        `Student profile and quiz results:\n\n${fullProfileText()}\n\nWrite the report as JSON matching the schema in the system instruction.`,
+        REPORT_SYSTEM,
+        20000,
+      );
+    } catch (e) {
+      // Free-tier exhausted, network down, bad key, malformed JSON — any of
+      // these silently falls through to the local report. No user-visible
+      // error, no spend.
+      console.info("Gemini unavailable, using local report:", e.message);
+    }
+    state.report = ai ? mergeAiIntoLocal(local, ai) : local;
   } catch (e) {
     console.error(e);
     state.reportError = "Report generation failed. Please refresh and try again.";
