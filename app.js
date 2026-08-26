@@ -713,10 +713,15 @@ const _dv = (d, cat, key) => (d[cat] && d[cat][key]) || 0;
 const _ws = (d, key) => (d.workstyle && d.workstyle[key]) ? 1 : 0;
 const _pos = (v, floor) => Math.max(0, (v || 0) - floor);
 
+// Each archetype has `short` (the headline — one crisp identity line) and
+// `long` (the elaboration — the rest of the identity claim, shown in the
+// profile paragraph, not the headline). Splitting them keeps the report
+// hero short and lets the deeper prose read as body copy where it belongs.
 const ARCHETYPES = [
   {
     id: "go_getter",
-    line: "You're a go-getter — starting things is your default, and waiting for permission wears you down fast. The wheel is where you belong, not the passenger seat.",
+    short: "You're a go-getter.",
+    long: "Starting things is your default, and waiting for permission wears you down fast. The wheel is where you belong, not the passenger seat.",
     score: (d) =>
       _pos(_dv(d,"interests","entrepreneurial"), 55) * 1.6 +
       _pos(_dv(d,"strengths","leadership"), 55) * 1.2 +
@@ -727,7 +732,8 @@ const ARCHETYPES = [
   },
   {
     id: "quiet_operator",
-    line: "You're a quiet operator — deep problems in quiet rooms are where you actually pull ahead. You solve; you don't sell, and any job that flips that ratio will grind you down.",
+    short: "You're a quiet operator.",
+    long: "Deep problems in quiet rooms are where you actually pull ahead. You solve; you don't sell, and any job that flips that ratio will grind you down.",
     score: (d) =>
       _pos(_dv(d,"strengths","focus"), 55) * 1.5 +
       _pos(_dv(d,"strengths","logic"), 55) * 1.2 +
@@ -739,7 +745,8 @@ const ARCHETYPES = [
   },
   {
     id: "builder_finisher",
-    line: "You're the rare kind — creative AND you actually ship. Most people are one or the other; that combination is what separates respected from merely talented.",
+    short: "You're creative — and you actually ship.",
+    long: "Most people are one or the other; that combination is what separates respected from merely talented.",
     score: (d) =>
       _pos(_dv(d,"strengths","creativity"), 55) * 1.3 +
       _pos(_dv(d,"strengths","focus"), 55) * 1.3 +
@@ -748,7 +755,8 @@ const ARCHETYPES = [
   },
   {
     id: "quiet_leader",
-    line: "You're a quiet leader — people trust you before you've said much. You lead by reading the room, not by owning the mic, and the authority holds because it isn't performed.",
+    short: "You're a quiet leader.",
+    long: "People trust you before you've said much. You lead by reading the room, not by owning the mic, and the authority holds because it isn't performed.",
     score: (d) =>
       _pos(_dv(d,"strengths","leadership"), 55) * 1.5 +
       _pos(_dv(d,"strengths","empathy"), 55) * 1.3 +
@@ -757,7 +765,8 @@ const ARCHETYPES = [
   },
   {
     id: "front_of_room",
-    line: "You come alive in rooms — persuasion is how you naturally move through the world, not a skill you had to learn. Any job that hides you from people will feel like a cage inside a month.",
+    short: "You come alive in rooms.",
+    long: "Persuasion is how you naturally move through the world, not a skill you had to learn. Any job that hides you from people will feel like a cage inside a month.",
     score: (d) =>
       _pos(_dv(d,"strengths","speaking"), 55) * 1.5 +
       _pos(_dv(d,"strengths","leadership"), 55) * 1.0 +
@@ -768,7 +777,8 @@ const ARCHETYPES = [
   },
   {
     id: "craftsperson",
-    line: "You're a craftsperson — you need to make things that are yours, with your name on them. Managing other people's creative output would slowly kill you.",
+    short: "You're a craftsperson.",
+    long: "You need to make things that are yours, with your name on them. Managing other people's creative output would slowly kill you.",
     score: (d) =>
       _pos(_dv(d,"values","creativity_val"), 55) * 1.5 +
       _pos(_dv(d,"strengths","creativity"), 55) * 1.0 +
@@ -778,7 +788,8 @@ const ARCHETYPES = [
   },
   {
     id: "analyst",
-    line: "You're an analyst at heart — you'd rather be right than fast. Problems that need a proof are where you slow down and everyone else speeds up wrong.",
+    short: "You're an analyst at heart.",
+    long: "You'd rather be right than fast. Problems that need a proof are where you slow down and everyone else speeds up wrong.",
     score: (d) =>
       _pos(_dv(d,"interests","analytical"), 55) * 1.4 +
       _pos(_dv(d,"strengths","logic"), 55) * 1.3 +
@@ -787,7 +798,8 @@ const ARCHETYPES = [
   },
   {
     id: "investigator",
-    line: "You're an investigator — you get to the bottom of things other people give up on. Slow answers to deep questions is your natural rhythm, and it's rarer than it looks at your age.",
+    short: "You're an investigator.",
+    long: "You get to the bottom of things other people give up on. Slow answers to deep questions is your natural rhythm, and it's rarer than it looks at your age.",
     score: (d) =>
       _pos(_dv(d,"interests","investigative"), 55) * 1.6 +
       _pos(_dv(d,"strengths","focus"), 55) * 1.2 +
@@ -797,7 +809,8 @@ const ARCHETYPES = [
   },
   {
     id: "people_person",
-    line: "You're a people person — you read a room faster than you think, and any career that hides you from humans will feel wrong within weeks. People aren't the setting for you; they're the point.",
+    short: "You're a people person.",
+    long: "You read a room faster than you think, and any career that hides you from humans will feel wrong within weeks. People aren't the setting for you; they're the point.",
     score: (d) =>
       _pos(_dv(d,"interests","social"), 55) * 1.4 +
       _pos(_dv(d,"strengths","empathy"), 55) * 1.4 +
@@ -806,7 +819,8 @@ const ARCHETYPES = [
   },
   {
     id: "hands_on_maker",
-    line: "You're a hands-on maker — you want a day that ends with something you can actually touch. Slide decks and status calls would drain you dry inside a year.",
+    short: "You're a hands-on maker.",
+    long: "You want a day that ends with something you can actually touch. Slide decks and status calls would drain you dry inside a year.",
     score: (d) =>
       _pos(_dv(d,"strengths","hands"), 55) * 1.5 +
       _pos(_dv(d,"interests","practical"), 55) * 1.3 +
@@ -815,7 +829,8 @@ const ARCHETYPES = [
   },
   {
     id: "sharp_writer",
-    line: "You're a sharp writer — you think clearly on the page in a way most people can't. Arguments are your medium, and careers built on written craft will reward you faster than most tracks.",
+    short: "You're a sharp writer.",
+    long: "You think clearly on the page in a way most people can't. Arguments are your medium, and careers built on written craft will reward you faster than most tracks.",
     score: (d) =>
       _pos(_dv(d,"strengths","writing"), 55) * 1.6 +
       _pos(_dv(d,"strengths","logic"), 50) * 0.9 +
@@ -825,7 +840,8 @@ const ARCHETYPES = [
   },
   {
     id: "steady_grower",
-    line: "You're a steady grower — you want to get sharper every year without gambling the ground under you. Solid institutions with real learning cultures fit you far better than roulette.",
+    short: "You're a steady grower.",
+    long: "You want to get sharper every year without gambling the ground under you. Solid institutions with real learning cultures fit you far better than roulette.",
     score: (d) =>
       _pos(_dv(d,"values","growth"), 55) * 1.3 +
       _pos(_dv(d,"values","stability"), 55) * 1.2 +
@@ -835,7 +851,8 @@ const ARCHETYPES = [
   },
   {
     id: "balance_realist",
-    line: "You're a balance-first realist — life outside work matters as much as inside, and you're not willing to trade your 20s away for a title. That's clarifying, not lazy — it rules out grind-culture fields fast.",
+    short: "You're a balance-first realist.",
+    long: "Life outside work matters as much as inside, and you're not willing to trade your 20s away for a title. That's clarifying, not lazy — it rules out grind-culture fields fast.",
     score: (d) =>
       _pos(_dv(d,"values","balance"), 60) * 1.7 +
       _pos(_dv(d,"values","stability"), 50) * 0.5 -
@@ -844,7 +861,8 @@ const ARCHETYPES = [
   },
   {
     id: "independent_earner",
-    line: "You want to earn well AND own your calendar — that combination is real, and it's a filter, not a wish. Most jobs will fail one of the two; the ones that pass usually come after you've earned credibility first.",
+    short: "You want to earn well and own your calendar.",
+    long: "That combination is real, and it's a filter, not a wish. Most jobs will fail one of the two; the ones that pass usually come after you've earned credibility first.",
     score: (d) =>
       _pos(_dv(d,"values","freedom"), 60) * 1.3 +
       _pos(_dv(d,"values","money"), 60) * 1.3 +
@@ -853,7 +871,8 @@ const ARCHETYPES = [
   },
   {
     id: "impact_driven",
-    line: "You're impact-driven — the day has to matter for someone else, or the money won't cover the hollowness. Fields that only pay well will drain you faster than they build you.",
+    short: "You're impact-driven.",
+    long: "The day has to matter for someone else, or the money won't cover the hollowness. Fields that only pay well will drain you faster than they build you.",
     score: (d) =>
       _pos(_dv(d,"values","impact"), 60) * 1.6 +
       _pos(_dv(d,"strengths","empathy"), 50) * 0.6 +
@@ -862,7 +881,8 @@ const ARCHETYPES = [
   },
   {
     id: "prestige_climber",
-    line: "You want to be near the top of a serious field — and you know the long apprenticeship is the price. Pick the field carefully; the peak has to be worth reaching, because you'll spend years getting there.",
+    short: "You're aiming for the top of a serious field.",
+    long: "You know the long apprenticeship is the price. Pick the field carefully; the peak has to be worth reaching, because you'll spend years getting there.",
     score: (d) =>
       _pos(_dv(d,"values","prestige"), 60) * 1.5 +
       _pos(_dv(d,"values","growth"), 55) * 0.8 +
@@ -872,18 +892,25 @@ const ARCHETYPES = [
 ];
 
 const STILL_FORMING_LINES = [
-  "You're still forming — your scores clustered near the middle across most dimensions, and that's real information, not a bug. You haven't yet had the experiences that force preferences to sharpen; the fix isn't more quizzes, it's trying things wildly different from each other.",
-  "You're at the edge of a lane, not inside one yet — nothing in your quizzes punched clearly above the middle. That's normal at your age. The fastest way through is doing things that force you to notice what you actually like versus what you're just okay with.",
+  {
+    short: "You're still forming.",
+    long: "Your scores clustered near the middle across most dimensions, and that's real information, not a bug. You haven't yet had the experiences that force preferences to sharpen; the fix isn't more quizzes, it's trying things wildly different from each other.",
+  },
+  {
+    short: "You're at the edge of a lane, not inside one yet.",
+    long: "Nothing in your quizzes punched clearly above the middle. That's normal at your age. The fastest way through is doing things that force you to notice what you actually like versus what you're just okay with.",
+  },
 ];
 
 function selectArchetype(dims) {
   const scored = ARCHETYPES
-    .map(a => ({ id: a.id, line: a.line, score: a.score(dims) }))
+    .map(a => ({ id: a.id, short: a.short, long: a.long, score: a.score(dims) }))
     .sort((x, y) => y.score - x.score);
   const top = scored[0];
   if (!top || top.score < 20) {
     const seed = profileSeed(dims);
-    return { id: "still_forming", line: pickSlot(STILL_FORMING_LINES, seed, 3) };
+    const pick = pickSlot(STILL_FORMING_LINES, seed, 3);
+    return { id: "still_forming", short: pick.short, long: pick.long };
   }
   return top;
 }
@@ -928,9 +955,7 @@ function tensionClause(dims, archetype) {
 }
 
 function generateHeadline(dims) {
-  const arche = selectArchetype(dims);
-  const tension = tensionClause(dims, arche);
-  return tension ? `${arche.line} ${tension}` : arche.line;
+  return selectArchetype(dims).short;
 }
 
 // Sentence pools for the profile paragraph. Each pool has 5-6 variants so
@@ -939,7 +964,7 @@ function generateHeadline(dims) {
 const PROFILE_INTEREST_SPLIT = [
   ({i1P, i1N, i2P, i2N}) => `Your interests split roughly evenly between ${i1P} (${i1N}) and ${i2P} (${i2N}) — that's a real duality, not indecision.`,
   ({i1P, i1N, i2P, i2N}) => `You're pulled in two directions at once: ${i1P} (${i1N}) and ${i2P} (${i2N}). Careers that touch both feel most natural.`,
-  ({i1P, i1N, i2P, i2N}) => `The interest quiz sorted you into two clusters — ${i1P} (${i1N}) and ${i2P} (${i2N}) — barely apart. Don't force yourself to pick one yet.`,
+  ({i1P, i1N, i2P, i2N}) => `${cap(i1P)} (${i1N}) and ${i2P} (${i2N}) came out almost tied on the interest quiz. Don't force yourself to pick between them yet.`,
   ({i1P, i1N, i2P, i2N}) => `Two interests punched above the middle together: ${i1P} at ${i1N}, and ${i2P} right behind at ${i2N}. That combination narrows the field usefully.`,
   ({i1P, i1N, i2P, i2N}) => `You're a genuine hybrid — ${i1P} (${i1N}) and ${i2P} (${i2N}) both showed up strong, which is rarer than it looks at your age.`,
 ];
@@ -997,6 +1022,14 @@ function generateProfile(dims) {
   const seed = profileSeed(dims);
 
   const parts = [];
+
+  // The headline is now short (identity only). Fold the archetype's
+  // elaboration and any tension clause into the profile paragraph as
+  // opening sentences so nothing that used to be in the hero is lost.
+  const arche = selectArchetype(dims);
+  if (arche.long) parts.push(arche.long);
+  const tension = tensionClause(dims, arche);
+  if (tension) parts.push(tension);
 
   // ---- Interest sentence
   const iStrong = iAll.filter(([_, v]) => v >= FLOOR);
@@ -5430,7 +5463,7 @@ const _initEmail = _initUser?.email || null;
 // cached reports look stale. `loadReport` silently discards any cached report
 // whose stamp doesn't match; the report screen auto-regenerates from fresh
 // quiz answers on next visit.
-const REPORT_SCHEMA_VERSION = 2;
+const REPORT_SCHEMA_VERSION = 3;
 function loadReport(email) {
   const r = store.get(dataKey("report", email), null);
   if (!r || r.schemaVersion !== REPORT_SCHEMA_VERSION) return null;
