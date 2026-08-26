@@ -6067,13 +6067,21 @@ function renderLanding() {
         </div>
         <div style="position:relative;border:1px solid var(--line2);border-radius:18px;background:var(--panel);overflow:hidden;box-shadow:0 30px 80px -50px rgba(0,0,0,.9)">
           <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line)"><span style="width:22px;height:22px;border-radius:6px;background:var(--accsoft);display:grid;place-items:center;color:var(--acclite);font-size:11px;font-family:var(--mono)">${n}</span><span style="font-size:13px;color:var(--ink2)">Career library</span></div>
-          <div style="padding:28px 34px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px">
-            ${CAREERS.map((c, i) => `
-              <button class="hz-lib-card" data-action="go" data-screen="${ctaScreen}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;border:1px solid ${i === 0 ? "var(--accline)" : "var(--line)"};background:${i === 0 ? "var(--accsoft)" : "transparent"};border-radius:12px;cursor:pointer;color:inherit">
-                <span style="display:grid;place-items:center;color:${i === 0 ? "var(--acclite)" : "var(--sub)"}">${careerIcon(c.id, 20)}</span>
-                <span style="font-size:11px;color:${i === 0 ? "var(--acclite)" : "var(--sub)"};text-align:center;line-height:1.3">${esc(c.label)}</span>
-              </button>
-            `).join("")}
+          <div class="hz-lib-wrap" data-collapsed="true">
+            <div class="hz-lib-grid" style="padding:28px 34px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px">
+              ${CAREERS.map((c, i) => `
+                <button class="hz-lib-card" data-action="go" data-screen="${ctaScreen}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;border:1px solid ${i === 0 ? "var(--accline)" : "var(--line)"};background:${i === 0 ? "var(--accsoft)" : "transparent"};border-radius:12px;cursor:pointer;color:inherit">
+                  <span style="display:grid;place-items:center;color:${i === 0 ? "var(--acclite)" : "var(--sub)"}">${careerIcon(c.id, 20)}</span>
+                  <span style="font-size:11px;color:${i === 0 ? "var(--acclite)" : "var(--sub)"};text-align:center;line-height:1.3">${esc(c.label)}</span>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+          <div class="hz-lib-more">
+            <button class="hz-lib-more-btn" onclick="(function(b){var w=b.closest('.hz-lib-more').previousElementSibling;var open=w.getAttribute('data-collapsed')!=='true';w.setAttribute('data-collapsed', open?'true':'false');b.querySelector('.hz-lib-more-label').textContent = open ? 'See all ${n} careers' : 'Show less';b.querySelector('.hz-lib-more-chev').style.transform = open ? '' : 'rotate(180deg)';})(this)">
+              <span class="hz-lib-more-label">See all ${n} careers</span>
+              <span class="hz-lib-more-chev" aria-hidden="true">▾</span>
+            </button>
           </div>
         </div>
       </div>
@@ -6611,21 +6619,8 @@ function renderCareers() {
       </div>
 
       <div class="career-grid">
-        ${filtered.map(c => {
+        ${filtered.filter(c => SIM_READY.has(c.id)).map(c => {
           const done = state.completedSims.find(s => s.career === c.label);
-          const ready = SIM_READY.has(c.id);
-          if (!ready) {
-            return `
-              <button class="career-card coming-soon" disabled aria-disabled="true">
-                <div class="career-card-top">
-                  <span class="badge badge-soon">COMING SOON</span>
-                </div>
-                <div class="career-card-cat">${esc((c.subgroup || c.group).toUpperCase())}</div>
-                <div class="career-card-title">${esc(c.label)}</div>
-                <div class="career-card-desc">${esc(c.plain)}</div>
-              </button>
-            `;
-          }
           return `
             <button class="career-card ${done ? "done" : ""}" data-action="start-sim" data-career-id="${esc(c.id)}">
               <div class="career-card-top">
@@ -6638,6 +6633,36 @@ function renderCareers() {
           `;
         }).join("")}
       </div>
+
+      ${(() => {
+        const locked = filtered.filter(c => !SIM_READY.has(c.id));
+        if (!locked.length) return "";
+        return `
+          <details class="coming-soon-drop">
+            <summary class="coming-soon-summary">
+              <span class="coming-soon-summary-left">
+                <span class="badge badge-soon">COMING SOON</span>
+                <span class="coming-soon-summary-label">More careers we're building</span>
+              </span>
+              <span class="coming-soon-summary-right">
+                <span class="coming-soon-count">${locked.length}</span>
+                <span class="coming-soon-chev" aria-hidden="true">▾</span>
+              </span>
+            </summary>
+            <div class="coming-soon-list">
+              ${locked.map(c => `
+                <div class="coming-soon-item">
+                  <div class="coming-soon-item-head">
+                    <span class="coming-soon-item-title">${esc(c.label)}</span>
+                    <span class="coming-soon-item-cat">${esc((c.subgroup || c.group).toUpperCase())}</span>
+                  </div>
+                  <div class="coming-soon-item-desc">${esc(c.plain)}</div>
+                </div>
+              `).join("")}
+            </div>
+          </details>
+        `;
+      })()}
 
       <div class="custom-career" id="suggest-career">
         <div style="font-weight:600;font-size:14.5px;margin-bottom:6px;">Don't see the career you want?</div>

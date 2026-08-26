@@ -2975,6 +2975,101 @@ body[data-chrome="sidebar"] #app { flex-direction: row; align-items: stretch; }
 /* Tone the hover lift down to Linear-subtle */
 .career-card:not(.coming-soon):hover { transform: translateY(-3px); }
 
+.coming-soon-drop {
+  margin: -20px 0 32px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--panel) 45%, transparent);
+  overflow: hidden;
+  transition: border-color .2s ease, background .2s ease;
+}
+.coming-soon-drop[open] {
+  border-style: solid;
+  background: var(--panel);
+}
+.coming-soon-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.coming-soon-summary::-webkit-details-marker { display: none; }
+.coming-soon-summary-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.coming-soon-summary-label {
+  font-weight: 600;
+  font-size: 14.5px;
+  letter-spacing: -.01em;
+}
+.coming-soon-summary-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sub);
+}
+.coming-soon-count {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-alt);
+  color: var(--sub);
+}
+.coming-soon-chev {
+  display: inline-block;
+  font-size: 14px;
+  transition: transform .25s var(--ease-out);
+}
+.coming-soon-drop[open] .coming-soon-chev { transform: rotate(180deg); }
+.coming-soon-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  padding: 6px 18px 20px;
+}
+.coming-soon-item {
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md, 10px);
+  background: color-mix(in srgb, var(--panel-alt) 60%, transparent);
+  opacity: .82;
+}
+.coming-soon-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.coming-soon-item-title {
+  font-weight: 600;
+  font-size: 14.5px;
+  letter-spacing: -.01em;
+}
+.coming-soon-item-cat {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: var(--faint);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.coming-soon-item-desc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--sub);
+}
+
 .custom-career {
   padding: clamp(22px, 3vw, 30px);
   border: 1.5px dashed var(--line-strong);
@@ -4705,3 +4800,53 @@ body[data-chrome="sidebar"] #app { flex-direction: row; align-items: stretch; }
   transition: opacity .28s ease, transform .28s ease;
 }
 .app-note.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Landing career-library collapse */
+.hz-lib-wrap {
+  position: relative;
+  overflow: hidden;
+  transition: max-height .35s ease;
+}
+.hz-lib-wrap[data-collapsed="true"] {
+  max-height: 236px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+}
+.hz-lib-wrap[data-collapsed="false"] {
+  max-height: 4000px;
+}
+.hz-lib-more {
+  display: flex;
+  justify-content: center;
+  padding: 8px 20px 22px;
+  border-top: 1px dashed var(--line);
+  background: var(--panel);
+}
+.hz-lib-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--line2, var(--line));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink, inherit);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.hz-lib-more-btn:hover {
+  background: var(--accsoft, rgba(255,255,255,.04));
+  border-color: var(--accline, var(--line2));
+  transform: translateY(-1px);
+}
+.hz-lib-more-chev {
+  display: inline-block;
+  font-size: 12px;
+  transition: transform .25s ease;
+}
+@media (max-width: 720px) {
+  .hz-lib-wrap[data-collapsed="true"] { max-height: 340px; }
+}
