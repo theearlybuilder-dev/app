@@ -132,6 +132,7 @@ const INTERESTS_QUIZ = {
     { q: "I like being in charge and convincing people to try my ideas." },
     { q: "I lose track of time when I'm making art, music, or writing." },
     { q: "I want to understand how something works, not just use it." },
+    { q: "I get pulled into arguments about what's fair and how rules should actually work." },
   ],
 };
 
@@ -151,6 +152,8 @@ const STRENGTHS_QUIZ = {
     { q: "Fixing, building, or making something physical work." },
     { q: "Spotting the flaw in someone's argument." },
     { q: "Convincing someone to change their mind." },
+    { q: "Seeing the pattern in something messy — data, a crowd, a game — before other people do." },
+    { q: "Picturing how something fits together in 3D — a room, a route, a shape — without needing to draw it." },
   ],
 };
 
@@ -168,6 +171,7 @@ const WEAKNESSES_QUIZ = {
     { q: "I skim the fine print and later realize I missed something." },
     { q: "Being around people all day exhausts me." },
     { q: "I need someone else to keep me on track." },
+    { q: "Other people's problems stick with me long after they've left the room." },
   ],
 };
 
@@ -185,6 +189,8 @@ const VALUES_QUIZ = {
     { q: "Learning something new almost every week." },
     { q: "Being home for dinner, weekends off, real vacations." },
     { q: "Making things — writing, designing, building — that are mine." },
+    { q: "Doing something different every week matters more than going deep on one thing." },
+    { q: "I need to see results from my work this month, not in a few years." },
   ],
 };
 
@@ -216,6 +222,8 @@ const QUIZ_TAGS = {
     { practical: 2 }, { entrepreneurial: 2 }, { investigative: 2, analytical: 1 },
     { analytical: 2 }, { social: 2 }, { practical: 2 },
     { entrepreneurial: 2, social: 1 }, { creative: 2 }, { investigative: 2 },
+    // New: fairness/rules pull — also reinforces investigative curiosity.
+    { justice_systems: 2, investigative: 1 },
   ],
   strengths: [
     { logic: 2 }, { writing: 2 }, { speaking: 2 }, { creativity: 2 },
@@ -224,15 +232,21 @@ const QUIZ_TAGS = {
     // Was mis-tagged as {logic:1, writing:1} which double-counted argument
     // critique into writing scores.
     { logic: 2 }, { speaking: 2 },
+    // New: pattern recognition (also feeds logic), spatial reasoning (also feeds hands).
+    { pattern_rec: 2, logic: 1 }, { spatial: 2, hands: 1 },
   ],
   weaknesses: [
     { procrastination: 2 }, { focus_bad: 2 }, { conflict_avoid: 2 },
     { boredom: 2 }, { perfectionism: 2 }, { detail_bad: 2 },
     { social_drain: 2 }, { focus_bad: 1, procrastination: 1 },
+    // New: emotional carry — the cost of caring work sitting on you after hours.
+    { emotional_carry: 2 },
   ],
   values: [
     { money: 2 }, { impact: 2 }, { freedom: 2 }, { prestige: 2 },
     { stability: 2 }, { growth: 2 }, { balance: 2 }, { creativity_val: 2 },
+    // New: variety (also nudges growth), feedback_speed (impatience for results).
+    { variety: 2, growth: 1 }, { feedback_speed: 2 },
   ],
 };
 
@@ -408,31 +422,389 @@ const CAREER_FIT = {
     ["weaknesses","focus_bad",-1,5],["weaknesses","perfectionism",-1,1],
     ["workstyle","fast",1,3],["workstyle","detail",1,2],["workstyle","team",1,1],
   ],
+
+  // ── Finance & Markets ─────────────────────────────
+  trader: [
+    // DEFINING: fast decisions under uncertainty, focus, risk tolerance
+    ["interests","analytical",1,4],["interests","entrepreneurial",1,2],
+    ["strengths","logic",1,5],["strengths","focus",1,5],
+    ["values","money",1,5],["values","growth",1,1],
+    ["values","balance",-1,3],["values","stability",-1,3],
+    ["weaknesses","focus_bad",-1,5],["weaknesses","procrastination",-1,3],
+    ["workstyle","fast",1,3],["workstyle","risk",1,3],["workstyle","specialist",1,1],
+  ],
+  accountant: [
+    // DEFINING: detail-obsession, structured work, stability
+    ["interests","analytical",1,3],["interests","practical",1,2],
+    ["strengths","logic",1,3],["strengths","focus",1,4],
+    ["values","stability",1,5],["values","balance",1,2],["values","money",1,1],
+    ["values","freedom",-1,1],["values","creativity_val",-1,1],
+    ["weaknesses","detail_bad",-1,6],["weaknesses","boredom",-1,3],["weaknesses","procrastination",-1,3],
+    ["workstyle","structured",1,3],["workstyle","careful",1,3],["workstyle","detail",1,3],["workstyle","solo",1,1],
+  ],
+  actuary: [
+    // DEFINING: logic + focus + high tolerance for long exams and repetition
+    ["interests","analytical",1,5],["interests","investigative",1,2],
+    ["strengths","logic",1,6],["strengths","focus",1,5],
+    ["values","stability",1,5],["values","balance",1,3],["values","money",1,2],
+    ["values","freedom",-1,1],
+    ["weaknesses","boredom",-1,5],["weaknesses","focus_bad",-1,4],["weaknesses","detail_bad",-1,4],
+    ["workstyle","solo",1,2],["workstyle","structured",1,2],["workstyle","careful",1,3],["workstyle","specialist",1,2],
+  ],
+
+  // ── Strategy & Consulting ─────────────────────────
+  strategist: [
+    // DEFINING: logic, bigpicture, writing (memos + decks), fewer client meetings than consult
+    ["interests","analytical",1,4],["interests","investigative",1,2],["interests","entrepreneurial",1,1],
+    ["strengths","logic",1,5],["strengths","writing",1,4],["strengths","speaking",1,2],
+    ["values","stability",1,2],["values","money",1,2],["values","prestige",1,2],["values","growth",1,2],
+    ["weaknesses","procrastination",-1,2],
+    ["workstyle","bigpicture",1,4],["workstyle","team",1,1],["workstyle","careful",1,2],["workstyle","generalist",1,2],
+  ],
+
+  // ── Entrepreneurship & Product ────────────────────
+  vc: [
+    // DEFINING: judgement over doing, social/networking, long feedback loops
+    ["interests","analytical",1,3],["interests","social",1,4],["interests","entrepreneurial",1,4],
+    ["strengths","speaking",1,4],["strengths","empathy",1,3],["strengths","writing",1,2],["strengths","logic",1,3],
+    ["values","money",1,4],["values","prestige",1,3],["values","freedom",1,2],
+    ["values","impact",-1,1],
+    ["weaknesses","social_drain",-1,4],["weaknesses","conflict_avoid",-1,2],
+    ["workstyle","bigpicture",1,3],["workstyle","risk",1,3],["workstyle","generalist",1,2],["workstyle","front",1,2],
+  ],
+  growth: [
+    // DEFINING: analytical + creative experimentation, fast iteration
+    ["interests","analytical",1,4],["interests","creative",1,3],["interests","entrepreneurial",1,3],
+    ["strengths","logic",1,4],["strengths","creativity",1,3],["strengths","writing",1,2],
+    ["values","growth",1,3],["values","money",1,2],["values","freedom",1,1],
+    ["weaknesses","focus_bad",-1,3],["weaknesses","perfectionism",-1,3],
+    ["workstyle","fast",1,3],["workstyle","flexible",1,2],["workstyle","team",1,1],["workstyle","generalist",1,2],
+  ],
+
+  // ── Marketing & Brand ─────────────────────────────
+  pr: [
+    // DEFINING: writing + speaking + empathy under pressure (crises)
+    ["interests","social",1,4],["interests","creative",1,3],
+    ["strengths","writing",1,5],["strengths","speaking",1,5],["strengths","empathy",1,4],
+    ["values","prestige",1,2],["values","growth",1,1],
+    ["values","balance",-1,3],["values","stability",-1,1],
+    ["weaknesses","conflict_avoid",-1,5],["weaknesses","social_drain",-1,3],
+    ["workstyle","fast",1,3],["workstyle","flexible",1,2],["workstyle","front",1,3],
+  ],
+  smm: [
+    // DEFINING: creative + fast + trend-native + social
+    ["interests","creative",1,5],["interests","social",1,4],["interests","entrepreneurial",1,1],
+    ["strengths","creativity",1,5],["strengths","writing",1,4],["strengths","empathy",1,3],
+    ["values","creativity_val",1,3],["values","freedom",1,1],
+    ["values","stability",-1,2],
+    ["weaknesses","focus_bad",-1,2],["weaknesses","perfectionism",-1,3],
+    ["workstyle","fast",1,4],["workstyle","flexible",1,2],["workstyle","front",1,2],["workstyle","generalist",1,1],
+  ],
+
+  // ── Software & Engineering ────────────────────────
+  dataeng: [
+    // DEFINING: logic + focus + systems thinking, less product-facing than swe
+    ["interests","analytical",1,5],["interests","investigative",1,2],["interests","practical",1,3],
+    ["strengths","logic",1,6],["strengths","focus",1,5],
+    ["values","money",1,2],["values","growth",1,2],["values","stability",1,1],["values","balance",1,1],
+    ["weaknesses","focus_bad",-1,4],["weaknesses","detail_bad",-1,4],
+    ["workstyle","solo",1,2],["workstyle","detail",1,3],["workstyle","careful",1,2],["workstyle","specialist",1,2],
+  ],
+  secureng: [
+    // DEFINING: paranoid investigative streak, logic, detail
+    ["interests","analytical",1,4],["interests","investigative",1,5],["interests","practical",1,2],
+    ["strengths","logic",1,6],["strengths","focus",1,5],
+    ["values","money",1,2],["values","impact",1,2],["values","stability",1,1],
+    ["weaknesses","detail_bad",-1,5],["weaknesses","focus_bad",-1,3],
+    ["workstyle","solo",1,2],["workstyle","careful",1,3],["workstyle","detail",1,3],["workstyle","specialist",1,2],
+  ],
+
+  // ── Data, AI & Research ───────────────────────────
+  datasci: [
+    // DEFINING: analytical + storytelling (writing/speaking) + investigative
+    ["interests","analytical",1,5],["interests","investigative",1,4],
+    ["strengths","logic",1,5],["strengths","writing",1,3],["strengths","speaking",1,2],["strengths","focus",1,3],
+    ["values","growth",1,3],["values","money",1,2],
+    ["weaknesses","focus_bad",-1,3],["weaknesses","detail_bad",-1,3],
+    ["workstyle","solo",1,1],["workstyle","careful",1,2],["workstyle","specialist",1,2],["workstyle","team",1,1],
+  ],
+  researchsci: [
+    // DEFINING: investigative + focus + writing + long payoffs + low money
+    ["interests","investigative",1,6],["interests","analytical",1,3],
+    ["strengths","logic",1,4],["strengths","focus",1,5],["strengths","writing",1,5],
+    ["values","growth",1,4],["values","impact",1,2],
+    ["values","money",-1,3],["values","balance",-1,1],
+    ["weaknesses","procrastination",-1,4],["weaknesses","boredom",-1,3],
+    ["workstyle","solo",1,2],["workstyle","theory",1,5],["workstyle","careful",1,3],["workstyle","specialist",1,3],
+  ],
+
+  // ── Design & Architecture ─────────────────────────
+  indusdesign: [
+    // DEFINING: creative + hands + practical (manufacturability)
+    ["interests","creative",1,5],["interests","practical",1,4],["interests","analytical",1,2],
+    ["strengths","creativity",1,6],["strengths","hands",1,4],["strengths","focus",1,3],
+    ["values","creativity_val",1,4],["values","impact",1,1],
+    ["weaknesses","detail_bad",-1,3],
+    ["workstyle","solo",1,1],["workstyle","careful",1,2],["workstyle","detail",1,3],["workstyle","specialist",1,2],
+  ],
+  gamedesign: [
+    // DEFINING: creative + analytical (systems/balance) + practical playtesting
+    ["interests","creative",1,5],["interests","analytical",1,3],["interests","practical",1,2],
+    ["strengths","creativity",1,6],["strengths","logic",1,3],["strengths","empathy",1,3],
+    ["values","creativity_val",1,4],["values","growth",1,1],
+    ["values","stability",-1,2],
+    ["weaknesses","perfectionism",-1,3],
+    ["workstyle","team",1,2],["workstyle","flexible",1,2],["workstyle","detail",1,2],["workstyle","specialist",1,1],
+  ],
+
+  // ── Medicine & Health ─────────────────────────────
+  nurse: [
+    // DEFINING: empathy + hands + focus under pressure + impact
+    ["interests","social",1,4],["interests","practical",1,4],["interests","investigative",1,1],
+    ["strengths","empathy",1,6],["strengths","hands",1,5],["strengths","focus",1,4],
+    ["values","impact",1,5],["values","stability",1,3],
+    ["values","balance",-1,3],["values","prestige",-1,1],
+    ["weaknesses","social_drain",-1,5],["weaknesses","detail_bad",-1,5],["weaknesses","conflict_avoid",-1,2],
+    ["workstyle","team",1,2],["workstyle","fast",1,2],["workstyle","careful",1,3],["workstyle","front",1,2],
+  ],
+  therapist: [
+    // DEFINING: empathy + speaking + patience over years of slow change
+    ["interests","social",1,5],["interests","investigative",1,3],
+    ["strengths","empathy",1,6],["strengths","speaking",1,4],["strengths","focus",1,3],
+    ["values","impact",1,5],["values","balance",1,2],["values","freedom",1,2],
+    ["values","money",-1,2],["values","prestige",-1,1],
+    ["weaknesses","social_drain",-1,5],["weaknesses","conflict_avoid",-1,2],
+    ["workstyle","solo",1,1],["workstyle","careful",1,3],["workstyle","front",1,2],["workstyle","specialist",1,2],
+  ],
+  dentist: [
+    // DEFINING: hands + focus + detail + stability (own the practice)
+    ["interests","practical",1,4],["interests","investigative",1,2],["interests","social",1,2],
+    ["strengths","hands",1,6],["strengths","focus",1,5],["strengths","empathy",1,2],
+    ["values","stability",1,4],["values","money",1,3],["values","balance",1,2],["values","freedom",1,2],
+    ["weaknesses","detail_bad",-1,5],["weaknesses","social_drain",-1,2],
+    ["workstyle","careful",1,3],["workstyle","detail",1,3],["workstyle","structured",1,2],["workstyle","specialist",1,2],
+  ],
+  vet: [
+    // DEFINING: empathy (owners AND animals) + hands + emotional resilience
+    ["interests","practical",1,4],["interests","investigative",1,3],["interests","social",1,2],
+    ["strengths","hands",1,5],["strengths","empathy",1,5],["strengths","focus",1,3],
+    ["values","impact",1,4],["values","stability",1,2],
+    ["values","money",-1,1],["values","balance",-1,2],
+    ["weaknesses","social_drain",-1,3],["weaknesses","detail_bad",-1,4],
+    ["workstyle","careful",1,3],["workstyle","team",1,1],["workstyle","front",1,2],["workstyle","generalist",1,1],
+  ],
+
+  // ── Law, Policy & Public Service ──────────────────
+  policy: [
+    // DEFINING: writing + investigative + impact + slow feedback loops
+    ["interests","investigative",1,5],["interests","analytical",1,3],
+    ["strengths","writing",1,6],["strengths","logic",1,4],["strengths","focus",1,3],
+    ["values","impact",1,5],["values","stability",1,2],
+    ["values","money",-1,2],["values","prestige",-1,1],
+    ["weaknesses","procrastination",-1,3],["weaknesses","boredom",-1,3],
+    ["workstyle","solo",1,1],["workstyle","theory",1,3],["workstyle","careful",1,3],["workstyle","specialist",1,2],
+  ],
+  diplomat: [
+    // DEFINING: speaking + writing + empathy + rootless (postings)
+    ["interests","social",1,4],["interests","investigative",1,3],
+    ["strengths","speaking",1,5],["strengths","writing",1,5],["strengths","empathy",1,4],
+    ["values","impact",1,3],["values","prestige",1,3],["values","growth",1,2],
+    ["values","stability",-1,3],["values","balance",-1,2],
+    ["weaknesses","social_drain",-1,3],["weaknesses","conflict_avoid",-1,3],
+    ["workstyle","structured",1,2],["workstyle","careful",1,3],["workstyle","front",1,2],["workstyle","generalist",1,2],
+  ],
+
+  // ── Media, Writing & Film ─────────────────────────
+  novelist: [
+    // DEFINING: writing + solo + patience + freedom over money
+    ["interests","creative",1,5],["interests","investigative",1,2],
+    ["strengths","writing",1,6],["strengths","creativity",1,5],["strengths","focus",1,5],
+    ["values","creativity_val",1,5],["values","freedom",1,4],
+    ["values","money",-1,4],["values","stability",-1,4],["values","prestige",-1,1],
+    ["weaknesses","procrastination",-1,5],["weaknesses","perfectionism",-1,3],
+    ["workstyle","solo",1,4],["workstyle","flexible",1,2],["workstyle","specialist",1,2],
+  ],
+  musician: [
+    // DEFINING: creative + hands (instrument) + performance + freedom
+    ["interests","creative",1,6],["interests","practical",1,2],["interests","entrepreneurial",1,1],
+    ["strengths","creativity",1,5],["strengths","hands",1,4],["strengths","focus",1,3],
+    ["values","creativity_val",1,5],["values","freedom",1,4],
+    ["values","stability",-1,4],["values","money",-1,3],
+    ["weaknesses","procrastination",-1,3],["weaknesses","boredom",-1,2],
+    ["workstyle","solo",1,1],["workstyle","flexible",1,3],["workstyle","front",1,2],["workstyle","specialist",1,2],
+  ],
+  actor: [
+    // DEFINING: creative + speaking + empathy + resilience through rejection
+    ["interests","creative",1,5],["interests","social",1,4],
+    ["strengths","speaking",1,5],["strengths","empathy",1,5],["strengths","creativity",1,4],
+    ["values","creativity_val",1,5],["values","freedom",1,2],["values","prestige",1,2],
+    ["values","stability",-1,5],["values","money",-1,3],
+    ["weaknesses","conflict_avoid",-1,3],["weaknesses","social_drain",-1,3],
+    ["workstyle","flexible",1,3],["workstyle","fast",1,1],["workstyle","front",1,3],
+  ],
+  photographer: [
+    // DEFINING: creative eye + solo + freelance freedom
+    ["interests","creative",1,5],["interests","practical",1,3],
+    ["strengths","creativity",1,5],["strengths","hands",1,3],["strengths","focus",1,3],
+    ["values","creativity_val",1,5],["values","freedom",1,4],
+    ["values","stability",-1,4],["values","money",-1,2],
+    ["weaknesses","procrastination",-1,3],
+    ["workstyle","solo",1,3],["workstyle","flexible",1,3],["workstyle","careful",1,2],["workstyle","specialist",1,1],
+  ],
+
+  // ── Education & Coaching ──────────────────────────
+  professor: [
+    // DEFINING: writing + investigative + speaking + long path
+    ["interests","investigative",1,6],["interests","social",1,2],["interests","analytical",1,2],
+    ["strengths","writing",1,5],["strengths","speaking",1,4],["strengths","focus",1,4],["strengths","logic",1,3],
+    ["values","impact",1,3],["values","growth",1,4],["values","freedom",1,2],
+    ["values","money",-1,2],
+    ["weaknesses","procrastination",-1,4],["weaknesses","social_drain",-1,2],
+    ["workstyle","solo",1,2],["workstyle","theory",1,5],["workstyle","specialist",1,3],
+  ],
+  coach: [
+    // DEFINING: leadership + empathy + speaking + impact through others
+    ["interests","social",1,5],["interests","practical",1,3],
+    ["strengths","leadership",1,5],["strengths","empathy",1,5],["strengths","speaking",1,4],
+    ["values","impact",1,5],["values","freedom",1,1],
+    ["values","stability",-1,2],["values","money",-1,2],
+    ["weaknesses","conflict_avoid",-1,4],["weaknesses","social_drain",-1,4],
+    ["workstyle","team",1,3],["workstyle","front",1,3],["workstyle","fast",1,1],
+  ],
+
+  // ── Craft & Trades ────────────────────────────────
+  carpenter: [
+    // DEFINING: hands + practical + patience + visible results
+    ["interests","practical",1,6],["interests","creative",1,2],
+    ["strengths","hands",1,6],["strengths","focus",1,4],["strengths","creativity",1,2],
+    ["values","freedom",1,3],["values","balance",1,2],["values","stability",1,1],
+    ["values","prestige",-1,2],
+    ["weaknesses","detail_bad",-1,4],["weaknesses","perfectionism",-1,2],
+    ["workstyle","solo",1,2],["workstyle","careful",1,3],["workstyle","detail",1,3],["workstyle","specialist",1,1],
+  ],
+  mechanic: [
+    // DEFINING: hands + investigative (diagnose) + practical + logic
+    ["interests","practical",1,6],["interests","investigative",1,3],["interests","analytical",1,2],
+    ["strengths","hands",1,6],["strengths","logic",1,3],["strengths","focus",1,3],
+    ["values","freedom",1,3],["values","stability",1,2],["values","balance",1,2],
+    ["values","prestige",-1,2],
+    ["weaknesses","detail_bad",-1,4],
+    ["workstyle","solo",1,2],["workstyle","careful",1,3],["workstyle","detail",1,2],["workstyle","specialist",1,1],
+  ],
+  pilot: [
+    // DEFINING: focus + detail + calm under pressure + structured protocol
+    ["interests","practical",1,4],["interests","analytical",1,2],
+    ["strengths","focus",1,6],["strengths","hands",1,4],["strengths","logic",1,3],
+    ["values","stability",1,3],["values","prestige",1,2],["values","money",1,2],
+    ["values","balance",-1,2],
+    ["weaknesses","detail_bad",-1,6],["weaknesses","focus_bad",-1,5],["weaknesses","procrastination",-1,3],
+    ["workstyle","structured",1,4],["workstyle","careful",1,4],["workstyle","detail",1,3],["workstyle","specialist",1,2],
+  ],
 };
+
+// ── CAREER_FIT extensions for the new dimensions ────────────────
+// Appended so we don't have to edit every base vector when adding a dim.
+// Weight convention: 5–6 = primary (defining), 3–4 = supporting, 1–2 = adjacent.
+// dir = +1 means the job WANTS this trait, -1 means it punishes it.
+// Grouped per career so all new-dim entries for one job live together.
+const CAREER_FIT_EXT = {
+  // Finance & Markets
+  quant:      [["strengths","pattern_rec",1,6]],
+  trader:     [["strengths","pattern_rec",1,4],["values","feedback_speed",1,5]],
+  accountant: [["values","variety",-1,4]],
+  actuary:    [["strengths","pattern_rec",1,3],["values","variety",-1,4]],
+
+  // Strategy & Consulting
+  consult:    [["values","variety",1,5]],
+
+  // Entrepreneurship & Product
+  founder:    [["values","variety",1,5],["values","feedback_speed",1,4]],
+  pm:         [["values","variety",1,3],["values","feedback_speed",1,3]],
+  growth:     [["values","variety",1,3],["values","feedback_speed",1,4]],
+
+  // Marketing & Brand
+  marketing:  [["values","feedback_speed",1,3]],
+  pr:         [["values","variety",1,3],["values","feedback_speed",1,5]],
+  smm:        [["values","feedback_speed",1,5]],
+
+  // Software & Engineering
+  swe:        [["values","variety",-1,2]],
+  dataeng:    [["values","variety",-1,2]],
+  secureng:   [["strengths","pattern_rec",1,5]],
+
+  // Data, AI & Research
+  ml:         [["strengths","pattern_rec",1,5]],
+  datasci:    [["strengths","pattern_rec",1,5]],
+  econ:       [["values","feedback_speed",-1,3]],
+  astro:      [["strengths","pattern_rec",1,3],["values","feedback_speed",-1,4]],
+  researchsci:[["values","variety",-1,3],["values","feedback_speed",-1,5]],
+
+  // Design & Architecture
+  designer:   [["strengths","spatial",1,3]],
+  architect:  [["strengths","spatial",1,6],["values","feedback_speed",-1,3]],
+  indusdesign:[["strengths","spatial",1,5]],
+  gamedesign: [["strengths","spatial",1,3]],
+
+  // Medicine & Health
+  doctor:     [["strengths","pattern_rec",1,3],["weaknesses","emotional_carry",-1,4]],
+  nurse:      [["weaknesses","emotional_carry",-1,5]],
+  therapist:  [["weaknesses","emotional_carry",-1,6]],
+  dentist:    [["strengths","spatial",1,5],["values","variety",-1,3]],
+  vet:        [["values","variety",1,2],["weaknesses","emotional_carry",-1,4]],
+
+  // Law, Policy & Public Service
+  law:        [["interests","justice_systems",1,6],["values","feedback_speed",-1,2]],
+  policy:     [["interests","justice_systems",1,5],["values","feedback_speed",-1,4]],
+  diplomat:   [["interests","justice_systems",1,4],["values","variety",1,4],["weaknesses","emotional_carry",-1,2]],
+
+  // Media, Writing & Film
+  journalist: [["strengths","pattern_rec",1,3],["interests","justice_systems",1,3],["values","variety",1,4],["weaknesses","emotional_carry",-1,2]],
+  director:   [["strengths","spatial",1,2]],
+  novelist:   [["values","variety",-1,2],["values","feedback_speed",-1,5]],
+  photographer:[["strengths","spatial",1,3]],
+
+  // Education & Coaching
+  teacher:    [["weaknesses","emotional_carry",-1,4]],
+  professor:  [["interests","justice_systems",1,2],["values","feedback_speed",-1,4]],
+  coach:      [["weaknesses","emotional_carry",-1,3]],
+
+  // Craft & Trades
+  chef:       [["strengths","spatial",1,2],["values","feedback_speed",1,3]],
+  carpenter:  [["strengths","spatial",1,4]],
+  mechanic:   [["strengths","pattern_rec",1,3]],
+  pilot:      [["strengths","spatial",1,5]],
+};
+for (const [id, extra] of Object.entries(CAREER_FIT_EXT)) {
+  if (CAREER_FIT[id]) CAREER_FIT[id].push(...extra);
+}
 
 const DIM_LABELS = {
   interests: {
     analytical: "logical problem-solving", creative: "creative expression",
     social: "connecting with people", practical: "hands-on building",
     entrepreneurial: "starting new things", investigative: "deep understanding",
+    justice_systems: "fairness and how rules work",
   },
   strengths: {
     logic: "logic and reasoning", writing: "writing clearly",
     speaking: "public speaking", creativity: "coming up with ideas",
     focus: "long deep focus", leadership: "leading groups",
     empathy: "reading people", hands: "hands-on skill",
+    pattern_rec: "spotting patterns others miss", spatial: "3D and spatial reasoning",
   },
   weaknesses: {
     procrastination: "putting things off", focus_bad: "losing focus fast",
     conflict_avoid: "avoiding hard conversations", boredom: "quitting when bored",
     perfectionism: "perfectionism", detail_bad: "missing small details",
     social_drain: "getting drained by people",
+    emotional_carry: "carrying other people's problems home",
   },
   values: {
     money: "high income", impact: "real-world impact", freedom: "freedom and autonomy",
     prestige: "prestige and status", stability: "stability and safety",
     growth: "constant learning", balance: "work-life balance",
     creativity_val: "creative expression",
+    variety: "variety over depth", feedback_speed: "seeing results fast",
   },
 };
 
@@ -464,6 +836,9 @@ const CROSS_BLEND = {
     leadership: [["interests","entrepreneurial",0.12],["weaknesses","conflict_avoid",-0.10]],
     empathy:    [["interests","social",0.12],["weaknesses","social_drain",-0.08]],
     hands:      [["interests","practical",0.15]],
+    // New dims — blend from neighbours so a single quiz question isn't the only signal.
+    pattern_rec:[["strengths","logic",0.12],["interests","investigative",0.08],["interests","analytical",0.06]],
+    spatial:    [["strengths","hands",0.10],["strengths","creativity",0.06],["interests","practical",0.06]],
   },
   weaknesses: {
     procrastination: [["strengths","focus",-0.12],["weaknesses","boredom",0.08]],
@@ -473,6 +848,8 @@ const CROSS_BLEND = {
     perfectionism:   [["strengths","focus",0.10],["weaknesses","detail_bad",-0.10]],
     detail_bad:      [["strengths","focus",-0.10],["weaknesses","perfectionism",-0.08]],
     social_drain:    [["interests","social",-0.12],["strengths","empathy",-0.08]],
+    // Empaths carry more of what patients/clients bring in — so empathy nudges this up.
+    emotional_carry: [["strengths","empathy",0.10],["weaknesses","social_drain",0.06]],
   },
   interests: {
     analytical:      [["strengths","logic",0.12],["interests","investigative",0.08]],
@@ -481,6 +858,8 @@ const CROSS_BLEND = {
     practical:       [["strengths","hands",0.12]],
     entrepreneurial: [["strengths","leadership",0.10],["values","freedom",0.08]],
     investigative:   [["strengths","logic",0.10],["strengths","focus",0.08]],
+    // Pull toward fairness/rules correlates with deep investigative curiosity and analysis.
+    justice_systems: [["interests","investigative",0.10],["interests","analytical",0.06]],
   },
   values: {
     money:          [["interests","entrepreneurial",0.08],["values","prestige",0.06]],
@@ -491,6 +870,10 @@ const CROSS_BLEND = {
     growth:         [["interests","investigative",0.08],["strengths","focus",0.06]],
     balance:        [["values","stability",0.06]],
     creativity_val: [["interests","creative",0.10],["strengths","creativity",0.08]],
+    // Variety-seekers usually bore fast and hate being pinned down.
+    variety:        [["weaknesses","boredom",0.10],["values","freedom",0.06],["values","stability",-0.06]],
+    // Impatience for results — correlates with entrepreneurial pull, penalized by patience/focus.
+    feedback_speed: [["interests","entrepreneurial",0.08],["strengths","focus",-0.06]],
   },
 };
 
@@ -542,7 +925,7 @@ function fitCareer(careerId, dims) {
       const answered = dims.workstyle[dim] || (opp && dims.workstyle[opp]);
       // If the paired question wasn't answered, treat as neutral rather than a "no" vote.
       userVal = answered ? (dims.workstyle[dim] ? 100 : 0) : 50;
-    } else userVal = dims[group][dim] ?? 0;
+    } else userVal = dims[group][dim] ?? 50;
     const alignment = dir === 1 ? userVal : 100 - userVal;
     numerator += alignment * weight;
     denominator += 100 * weight;
@@ -1149,12 +1532,12 @@ function whyAvoid(careerId, dims) {
 }
 
 function getTopFields(scoredCareers) {
-  // Only playable (sim-ready) careers count toward a subgroup's average — locked
-  // entries have no CAREER_FIT so they'd all default to 50 and drag things toward
-  // the mean. Subgroups with no playable careers are dropped entirely.
+  // Only careers with a real CAREER_FIT vector count toward a subgroup's
+  // average — anything without one would default to 50 and drag things toward
+  // the mean.
   const subs = {};
   for (const c of scoredCareers) {
-    if (!SIM_READY.has(c.id)) continue;
+    if (!CAREER_FIT[c.id]) continue;
     const key = c.subgroup || c.group;
     if (!subs[key]) subs[key] = { total: 0, count: 0 };
     subs[key].total += c.fit;
@@ -4930,10 +5313,10 @@ function buildLocalReport() {
     const key = c.subgroup || c.group;
     subgroupDismissCount[key] = (subgroupDismissCount[key] || 0) + 1;
   }
-  // Locked careers (no sim yet, no CAREER_FIT tuning) score a flat 50 — exclude
-  // them from every ranking, otherwise they pollute "actual jobs" and "avoid".
+  // Only score careers with a real CAREER_FIT vector — anything without one
+  // would fall back to a flat 50 and pollute "actual jobs" and "avoid".
   // Then apply dismiss-penalty and filter out dismissed careers themselves.
-  const scored = CAREERS.filter(c => SIM_READY.has(c.id))
+  const scored = CAREERS.filter(c => CAREER_FIT[c.id])
     .map(c => {
       const rawFit = fitCareer(c.id, dims);
       const penalty = (subgroupDismissCount[c.subgroup || c.group] || 0) * DISMISS_SIBLING_PENALTY;
