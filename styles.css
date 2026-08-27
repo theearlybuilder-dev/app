@@ -575,7 +575,6 @@ input[type="password"]::-webkit-textfield-decoration-container { display: none !
   object-fit: contain;
   transition: transform .35s var(--ease-spring);
 }
-:root[data-theme="dark"] .logo-mark { filter: invert(1) hue-rotate(180deg) brightness(1.1); }
 .logo:hover .logo-mark { transform: rotate(-8deg) scale(1.06); }
 .logo-text {
   font-weight: 750;
