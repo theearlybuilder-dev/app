@@ -963,7 +963,7 @@ function generateHeadline(dims) {
 // their exact score seed.
 const PROFILE_INTEREST_SPLIT = [
   ({i1P, i1N, i2P, i2N}) => `Your interests split roughly evenly between ${i1P} (${i1N}) and ${i2P} (${i2N}) — that's a real duality, not indecision.`,
-  ({i1P, i1N, i2P, i2N}) => `You're pulled in two directions at once: ${i1P} (${i1N}) and ${i2P} (${i2N}). Careers that touch both feel most natural.`,
+  ({i1P, i1N, i2P, i2N}) => `You're pulled in two directions at once: ${i1P} (${i1N}) and ${i2P} (${i2N}). Careers that draw on both will feel most natural.`,
   ({i1P, i1N, i2P, i2N}) => `${cap(i1P)} (${i1N}) and ${i2P} (${i2N}) came out almost tied on the interest quiz. Don't force yourself to pick between them yet.`,
   ({i1P, i1N, i2P, i2N}) => `Two interests punched above the middle together: ${i1P} at ${i1N}, and ${i2P} right behind at ${i2N}. That combination narrows the field usefully.`,
   ({i1P, i1N, i2P, i2N}) => `You're a genuine hybrid — ${i1P} (${i1N}) and ${i2P} (${i2N}) both showed up strong, which is rarer than it looks at your age.`,
@@ -976,9 +976,9 @@ const PROFILE_INTEREST_SOLO = [
   ({iP, iN}) => `The score to notice: ${iP} at ${iN} — ${scoreBand(iN)}, and nothing else in the interest quiz is close.`,
 ];
 const PROFILE_STRENGTH_DUO = [
-  ({s1P, s1N, s2P, s2N}) => `Your ${s1P} (${s1N}) is where you have most leverage; ${s2P} at ${s2N} is the reliable second gear.`,
-  ({s1P, s1N, s2P, s2N}) => `Two strengths anchor the profile: ${s1P} (${s1N}) as the primary, and ${s2P} (${s2N}) as backup. Careers that reward both compound fast.`,
-  ({s1P, s1N, s2P, s2N}) => `You're strongest at ${s1P} (${s1N}), with ${s2P} (${s2N}) right behind — the pair is worth more than the sum of the parts.`,
+  ({s1P, s1N, s2P, s2N}) => `Your ${s1P} (${s1N}) is where you have the most leverage; ${s2P} at ${s2N} is the reliable second gear.`,
+  ({s1P, s1N, s2P, s2N}) => `Two strengths anchor the profile: ${s1P} (${s1N}) as the primary, and ${s2P} (${s2N}) as backup. Careers that reward both will compound fast.`,
+  ({s1P, s1N, s2P, s2N}) => `You're strongest at ${s1P} (${s1N}), with ${s2P} (${s2N}) right behind — the pair is worth more than the sum of its parts.`,
   ({s1P, s1N, s2P, s2N}) => `The strength picture: ${s1P} at ${s1N}, then ${s2P} at ${s2N}. Look for roles that need both, not just one.`,
   ({s1P, s1N, s2P, s2N}) => `Your ${s1P} scored ${s1N} and your ${s2P} scored ${s2N} — that combo is what will separate you from people with the same interests.`,
 ];
@@ -986,7 +986,7 @@ const PROFILE_STRENGTH_SOLO = [
   ({sP, sN}) => `Your one clear strength is ${sP} at ${sN} — everything else scored below 55, so this is what you build around first.`,
   ({sP, sN}) => `${cap(sP)} at ${sN} is the only strength that punched above the middle. That narrows the "start here" list nicely.`,
   ({sP, sN}) => `The strengths quiz gave one clear answer: ${sP} (${sN}). Everything else is background.`,
-  ({sP, sN}) => `You have real ${sP} (${sN}) but the other strength dimensions are quiet — this is the one to lean on now.`,
+  ({sP, sN}) => `Your ${sP} is the real one (${sN}); the other strength dimensions are quiet, so this is what to lean on now.`,
 ];
 const PROFILE_VALUE_DUO = [
   ({v1P, v1N, v2P, v2N}) => `You want ${v1P} (${v1N}) and ${v2P} (${v2N}) — both scored high enough that trading one away will feel wrong even when the offer is good.`,
@@ -1131,15 +1131,20 @@ function whyCareerFits(careerId, dims) {
 
 function whyAvoid(careerId, dims) {
   const fit = CAREER_FIT[careerId];
+  // Only count a dim as a real mismatch when the user's actual score reflects
+  // it: required dims (dir=1) count only if uv is genuinely low (<50), and
+  // clash dims (dir=-1) count only if uv is genuinely high (>50). A big weight
+  // on a requirement the user actually meets is NOT a reason to avoid.
   const misaligned = fit.map(([g, d, dir, w]) => {
     const uv = g === "workstyle" ? (dims.workstyle[d] ? 100 : 0) : (dims[g][d] || 0);
     const alignment = dir === 1 ? uv : 100 - uv;
-    return { g, d, dir, w, uv, gap: (100 - alignment) * w };
-  }).sort((a, b) => b.gap - a.gap);
+    const real = dir === 1 ? uv < 50 : uv > 50;
+    return { g, d, dir, w, uv, gap: (100 - alignment) * w, real };
+  }).filter(x => x.real).sort((a, b) => b.gap - a.gap);
   const top = misaligned[0];
-  if (!top) return "Doesn't match your general profile.";
+  if (!top) return "A weak overall match — no single dealbreaker, just doesn't play to your strengths.";
   const label = top.g === "workstyle" ? "way of working" : (DIM_LABELS[top.g]?.[top.d] || top.d);
-  if (top.dir === 1) return `Needs strong ${label} — that's not your top signal.`;
+  if (top.dir === 1) return `Needs strong ${label}, which scored low for you.`;
   return `Would clash with your ${label}.`;
 }
 
@@ -7074,302 +7079,312 @@ function renderReport() {
     `;
   }
 
-  const snapshotTiles = buildSnapshotTiles(r);
   const showSim = !!r.simInsights;
   const showQuiz = r.quizBreakdown && r.quizBreakdown.length;
   const showPattern = (r.patterns && r.patterns.length) || (r.contrasts && r.contrasts.length);
   const showAvoid = r.avoid && r.avoid.length;
 
+  // ── Cover metadata: name / date / inputs count ────────────────
+  const u = state.user || {};
+  const preparedFor = [u.name, u.grade ? `Grade ${u.grade}` : ""].filter(Boolean).join(" · ") || (u.email || "You");
+  const genDate = new Date();
+  const genLabel = genDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  const volLabel = `Vol. 01 · ${genDate.toLocaleDateString(undefined, { month: "short", year: "numeric" })}`;
+  const quizzesDone = (r.quizBreakdown || []).length;
+  const simsDone = (state.completedSims || []).length;
+  const answersCount = Object.values(state.quizAnswers || {}).reduce((n, obj) => n + Object.keys(obj || {}).length, 0);
+  const inputsLine = [
+    `${quizzesDone} ${quizzesDone === 1 ? "quiz" : "quizzes"}`,
+    `${simsDone} ${simsDone === 1 ? "simulation" : "simulations"}`,
+    `${answersCount} ${answersCount === 1 ? "answer" : "answers"}`,
+  ].join(" · ");
+
+  // ── Snapshot 2×2 stats — top strength / interest / value / best-fit
+  const barFrom = (key) => (r.quizBreakdown || []).find(q => q.key === key)?.bars?.[0] || null;
+  const iTop = barFrom("interests");
+  const sTop = barFrom("strengths");
+  const vTop = barFrom("values");
+  const cTop = r.topCareers && r.topCareers[0];
+  const snapStat = (k, num, name, isPct = true) => `
+    <div class="rv2-stat">
+      <div class="rv2-kicker tight">${esc(k)}</div>
+      <div class="rv2-stat-row">
+        <span class="rv2-num-lg">${num}${isPct ? '<span class="u">%</span>' : ''}</span>
+        <span class="rv2-stat-name">${esc(name)}</span>
+      </div>
+    </div>`;
+
+  // ── TOC: build only for present sections ─────────────────────
+  const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+  const tocRows = [];
+  tocRows.push({ id: "rv2-snap", label: "Snapshot — strengths, watch-outs, headline numbers" });
+  if (r.compass && r.compass.length) tocRows.push({ id: "rv2-compass", label: "The compass — six axes, top matches" });
+  tocRows.push({ id: "rv2-playbook", label: "The playbook — six real jobs, honestly read" });
+  if (showAvoid) tocRows.push({ id: "rv2-avoid", label: "Careers to avoid — save the years" });
+  if (showSim) tocRows.push({ id: "rv2-sim", label: "Simulation signal — what you did, not what you said" });
+  if (showQuiz) tocRows.push({ id: "rv2-evidence", label: "Evidence — what the quizzes said" });
+  if (showPattern) tocRows.push({ id: "rv2-pattern", label: "Patterns and tensions" });
+  tocRows.push({ id: "rv2-plan", label: "The next six months" });
+
+  const bandCls = (score, band) => {
+    const b = (band || "").toLowerCase();
+    if (b === "low") return "low";
+    return "";
+  };
+
   return `
     ${renderNav()}
-    <div class="container wide rise">
-      <button class="back-link" data-action="go" data-screen="dashboard">← BACK TO DASHBOARD</button>
+    <div class="rv2">
+      <div class="rv2-no-print">
+        <button class="rv2-back" data-action="go" data-screen="dashboard">← Back to dashboard</button>
+      </div>
 
-      <!-- Sticky pill nav -->
-      <nav class="rpt-nav">
-        <a href="#rpt-snapshot" class="rpt-nav-item">Snapshot</a>
-        <a href="#rpt-matches" class="rpt-nav-item">Matches</a>
-        <a href="#rpt-playbook" class="rpt-nav-item">Playbook</a>
-        ${showAvoid ? '<a href="#rpt-avoid" class="rpt-nav-item">Avoid</a>' : ""}
-        ${showSim ? '<a href="#rpt-sim" class="rpt-nav-item">Sim signal</a>' : ""}
-        ${showQuiz ? '<a href="#rpt-evidence" class="rpt-nav-item">Evidence</a>' : ""}
-        ${showPattern ? '<a href="#rpt-pattern" class="rpt-nav-item">Pattern</a>' : ""}
-        <a href="#rpt-plan" class="rpt-nav-item">Plan</a>
-      </nav>
-
-      <!-- Hero -->
-      <header class="rpt-hero">
-        <div class="rpt-hero-eyebrow">The Career Compass · Your Report</div>
-        <h1 class="rpt-hero-headline">${esc(r.headline)}</h1>
-        <div class="rpt-hero-body">
-          <p class="rpt-hero-profile">${esc(r.profile)}</p>
+      <div class="rv2-topbar rv2-no-print">
+        <div class="rv2-topbar-l">
+          <div class="rv2-mark">◆</div>
+          <div class="rv2-topbar-t">The Early Builder</div>
+          <div class="rv2-topbar-tag">Compass Report</div>
         </div>
-      </header>
+        <div class="rv2-topbar-r">
+          <button class="rv2-topbar-btn" data-action="print">Print / PDF</button>
+          <button class="rv2-topbar-btn" data-action="regenerate-report">Regenerate</button>
+        </div>
+      </div>
 
-      <!-- 3-second snapshot tiles -->
-      ${snapshotTiles.length ? `
-        <div class="rpt-snap">
-          ${snapshotTiles.map(t => `
-            <div class="rpt-snap-tile">
-              <div class="rpt-snap-k">${esc(t.k)}</div>
-              <div class="rpt-snap-v">${esc(t.v)}</div>
-              <div class="rpt-snap-name">${esc(t.name)}</div>
+      <article class="rv2-article">
+
+        <!-- ══════════════ COVER ══════════════ -->
+        <header class="rv2-cover">
+          <div class="rv2-cover-top">
+            <span class="rv2-kicker">The Career Compass · Report</span>
+            <span class="rv2-kicker" style="color:var(--rv2-faint)">${esc(volLabel)}</span>
+          </div>
+          <h1 class="rv2-cover-h1">${esc(r.headline)}</h1>
+          <p class="rv2-cover-lede">${esc(r.profile)}</p>
+          <div class="rv2-cover-meta">
+            <div class="rv2-kicker tight">Prepared for</div><div>${esc(preparedFor)}</div>
+            <div class="rv2-kicker tight">Generated</div><div>${esc(genLabel)}</div>
+            <div class="rv2-kicker tight">Inputs</div><div>${esc(inputsLine)}</div>
+          </div>
+        </header>
+
+        <!-- ══════════════ TOC ══════════════ -->
+        <nav class="rv2-toc">
+          <div class="rv2-kicker rv2-toc-head">Contents</div>
+          <ol class="rv2-toc-list">
+            ${tocRows.map((row, idx) => `
+              <li class="rv2-toc-li">
+                <span class="rv2-toc-num">${romans[idx]}.</span>
+                <a href="#${row.id}">${esc(row.label)}</a>
+                <span class="rv2-toc-pg">${String(idx + 1).padStart(2, "0")}</span>
+              </li>
+            `).join("")}
+          </ol>
+        </nav>
+
+        <!-- ══════════════ I · SNAPSHOT ══════════════ -->
+        <section id="rv2-snap" class="rv2-section first">
+          <div class="rv2-kicker rv2-eyebrow">I · Snapshot</div>
+          <h2 class="rv2-h2">What to know first about you.</h2>
+          <p class="rv2-lead">The clearest signals from your quizzes — the strengths worth leaning into, and the friction worth planning around before choosing a field.</p>
+
+          <div class="rv2-stats">
+            ${sTop ? snapStat("Top strength", sTop.score, sTop.label) : ""}
+            ${iTop ? snapStat("Top interest", iTop.score, iTop.label) : ""}
+            ${vTop ? snapStat("Top value", vTop.score, vTop.label) : ""}
+            ${cTop ? snapStat("Best-fit career", cTop.fit, cTop.career) : ""}
+          </div>
+
+          <div class="rv2-cols-2">
+            <div>
+              <div class="rv2-list-head">Superpowers</div>
+              <ul class="rv2-list">
+                ${(r.superpowers || []).map(s => `<li>${esc(s)}</li>`).join("")}
+              </ul>
+            </div>
+            <div>
+              <div class="rv2-list-head">Watch-outs</div>
+              <ul class="rv2-list muted">
+                ${(r.watchouts || []).map(s => `<li>${esc(s)}</li>`).join("")}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════ II · COMPASS ══════════════ -->
+        ${r.compass && r.compass.length ? `
+          <section id="rv2-compass" class="rv2-section">
+            <div class="rv2-kicker rv2-eyebrow">II · The compass</div>
+            <h2 class="rv2-h2">Your compass, and the careers that match its shape.</h2>
+            <p class="rv2-lead">Six axes, each averaged from multiple quiz signals. The shape is more reliable than any single score — what matters is the overall silhouette, not the exact percentage on any one spoke.</p>
+
+            <figure class="rv2-figure">
+              ${renderCompassRadar(r.compass)}
+              <figcaption class="rv2-figcaption">Fig. 1 · ${r.compass.length}-axis compass, aggregated from your quizzes</figcaption>
+            </figure>
+          </section>
+        ` : ""}
+
+        <!-- ══════════════ III · PLAYBOOK ══════════════ -->
+        <section id="rv2-playbook" class="rv2-section">
+          <div class="rv2-kicker rv2-eyebrow">III · The playbook</div>
+          <h2 class="rv2-h2">${r.topCareers.length === 1 ? "One real job" : `${r.topCareers.length} real jobs`}, honestly read.</h2>
+          <p class="rv2-lead">The fit score weighs your interests, strengths, values, and every career you've dismissed. Reality is the market truth, not the brochure.</p>
+
+          ${r.topCareers.map((c, i) => `
+            <div class="rv2-career${i === 0 ? " first" : ""}${i === r.topCareers.length - 1 ? " last" : ""}">
+              <div class="rv2-career-hdr">
+                <div class="rv2-career-hdr-l">
+                  <span class="rv2-career-num">${String(i + 1).padStart(2, "0")}</span>
+                  <h3 class="rv2-career-h3">${esc(c.career)}</h3>
+                </div>
+                <div class="rv2-career-fit">${c.fit}<span class="u">/100</span></div>
+              </div>
+              <div class="rv2-career-tag">${esc(c.subgroup || c.group || "")}</div>
+              <p class="rv2-career-why">${esc(c.why)}</p>
+              ${c.reality ? `<p class="rv2-career-line gap"><span class="lbl">Reality. </span>${esc(c.reality)}</p>` : ""}
+              ${c.dos && c.dos.length ? `<p class="rv2-career-line"><span class="lbl">Do. </span>${esc(c.dos.join(" "))}</p>` : ""}
+              ${c.donts && c.donts.length ? `<p class="rv2-career-line last"><span class="lbl">Don't. </span>${esc(c.donts.join(" "))}</p>` : ""}
+              <div class="rv2-career-dismiss rv2-no-print">
+                <button data-action="dismiss-career" data-career-id="${esc(c.id)}">— Hide + devalue similar</button>
+              </div>
             </div>
           `).join("")}
-        </div>
-      ` : ""}
 
-      <!-- § Snapshot: superpowers | watchouts -->
-      <section class="rpt-section" id="rpt-snapshot">
-        <div class="rpt-section-head">
-          <div class="rpt-section-kicker">Snapshot</div>
-          <h2 class="rpt-section-title">What to know first about you.</h2>
-          <p class="rpt-section-lead">The clearest signals from your quizzes — strengths to lean into, friction to plan around.</p>
-        </div>
-        <div class="rpt-strengths">
-          <div class="rpt-strengths-col green">
-            <div class="rpt-strengths-lbl">★ Superpowers</div>
-            <ul class="rpt-strengths-list">
-              ${r.superpowers.map(s => `<li>${esc(s)}</li>`).join("")}
-            </ul>
-          </div>
-          <div class="rpt-strengths-col amber">
-            <div class="rpt-strengths-lbl">⚠ Watch-outs</div>
-            <ul class="rpt-strengths-list">
-              ${r.watchouts.map(s => `<li>${esc(s)}</li>`).join("")}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- § Matches: compass viz + top 3 -->
-      ${r.compass && r.compass.length ? `
-        <section class="rpt-section" id="rpt-matches">
-          <div class="rpt-section-head">
-            <div class="rpt-section-kicker">Where you fit</div>
-            <h2 class="rpt-section-title">Your compass, and the careers that match its shape.</h2>
-            <p class="rpt-section-lead">Every axis is averaged from multiple quiz signals — the shape is more reliable than any single score.</p>
-          </div>
-          <div class="compass-viz card">
-            <div class="compass-viz-chart">
-              ${renderCompassRadar(r.compass)}
+          ${r.dismissedCareers && r.dismissedCareers.length ? `
+            <div class="rv2-dismissed rv2-no-print">
+              <div><strong>${r.dismissedCareers.length} hidden</strong> — ${r.dismissedCareers.map(d => esc(d.career)).join(", ")}</div>
+              <button data-action="restore-dismissed">Restore all</button>
             </div>
-            <div class="compass-viz-fits">
-              <div class="mono" style="font-size:11px;color:var(--brand);letter-spacing:.14em;margin-bottom:4px;text-transform:uppercase;">Top matches</div>
-              ${(r.compassFits || []).map(f => {
-                const t = compassFitTag(f.fit);
-                return `
-                  <div class="compass-fit">
-                    <div class="compass-fit-score">${f.fit}</div>
-                    <div class="compass-fit-body">
-                      <div class="compass-fit-name">${esc(f.career)}</div>
-                      <div class="compass-fit-tag ${t.cls}">${t.label}</div>
-                      <div class="compass-fit-why">${esc(f.why)}</div>
-                    </div>
-                  </div>
-                `;
-              }).join("")}
-            </div>
-          </div>
+          ` : ""}
         </section>
-      ` : ""}
 
-      <!-- § Playbook: the 6 top careers -->
-      <section class="rpt-section" id="rpt-playbook">
-        <div class="rpt-section-head">
-          <div class="rpt-section-kicker">The playbook</div>
-          <h2 class="rpt-section-title">Six real jobs — with the honest read on each.</h2>
-          <p class="rpt-section-lead">Fit score weighs your interests, strengths, values, and every career you've dismissed.</p>
-        </div>
-        <div class="rpt-careers">
-          ${r.topCareers.map((c, i) => {
-            const fitCls = c.fit >= 75 ? "high" : c.fit >= 60 ? "mid" : "";
-            return `
-              <article class="rpt-career">
-                <div class="rpt-career-hdr">
-                  <div class="rpt-career-num">#${i+1}</div>
-                  <div class="rpt-career-title-wrap">
-                    <h3 class="rpt-career-title">${esc(c.career)}</h3>
-                    <div class="rpt-career-tag">${esc(c.subgroup || c.group)}</div>
-                  </div>
-                  <div class="rpt-career-fitpill ${fitCls}">${c.fit}% fit</div>
-                </div>
-                <div class="rpt-career-why">${esc(c.why)}</div>
-                ${c.reality ? `<div class="rpt-career-reality"><strong>Reality:</strong> ${esc(c.reality)}</div>` : ""}
-                ${(c.dos && c.dos.length) || (c.donts && c.donts.length) ? `
-                  <div class="rpt-career-panels">
-                    ${c.dos && c.dos.length ? `
-                      <div class="rpt-career-panel dos">
-                        <div class="rpt-career-panel-lbl">Do</div>
-                        <ul>${c.dos.map(d => `<li>${esc(d)}</li>`).join("")}</ul>
-                      </div>
-                    ` : ""}
-                    ${c.donts && c.donts.length ? `
-                      <div class="rpt-career-panel donts">
-                        <div class="rpt-career-panel-lbl">Don't</div>
-                        <ul>${c.donts.map(d => `<li>${esc(d)}</li>`).join("")}</ul>
-                      </div>
-                    ` : ""}
-                  </div>
-                ` : ""}
-                <div class="rpt-career-dismiss">
-                  <button class="btn btn-ghost" data-action="dismiss-career" data-career-id="${esc(c.id)}" style="font-size:12px;padding:6px 12px;color:var(--sub);">Not interested — hide + devalue similar</button>
-                </div>
-              </article>
-            `;
-          }).join("")}
-        </div>
-        ${r.dismissedCareers && r.dismissedCareers.length ? `
-          <div class="rpt-dismissed">
-            <div><strong>${r.dismissedCareers.length} hidden</strong> — ${r.dismissedCareers.map(d => esc(d.career)).join(", ")}</div>
-            <button class="btn btn-ghost" data-action="restore-dismissed" style="font-size:12px;padding:6px 12px;">Restore all</button>
-          </div>
-        ` : ""}
-      </section>
+        <!-- ══════════════ IV · AVOID ══════════════ -->
+        ${showAvoid ? `
+          <section id="rv2-avoid" class="rv2-section">
+            <div class="rv2-kicker rv2-eyebrow">IV · Save the years</div>
+            <h2 class="rv2-h2">Careers that would grind you down.</h2>
+            <p class="rv2-lead">The lowest-fit fields on the same scoring. Worth naming so you don't drift into them by default.</p>
 
-      <!-- § Avoid -->
-      ${showAvoid ? `
-        <section class="rpt-section" id="rpt-avoid">
-          <div class="rpt-section-head">
-            <div class="rpt-section-kicker">Save the years</div>
-            <h2 class="rpt-section-title">Careers that would grind you down.</h2>
-            <p class="rpt-section-lead">Lowest-fit fields from the same scoring — worth naming so you don't drift into them by default.</p>
-          </div>
-          <div class="rpt-avoid">
-            ${r.avoid.map(a => `
-              <div class="rpt-avoid-row">
-                <div class="rpt-avoid-name"><span class="x">×</span>${esc(a.career)}<span class="tag">${esc(a.group || "")}</span></div>
-                <div class="rpt-avoid-why">${esc(a.why)}</div>
+            ${r.avoid.map((a, i) => `
+              <div class="rv2-avoid-row${i === r.avoid.length - 1 ? " last" : ""}">
+                <div>
+                  <div class="rv2-avoid-name">${esc(a.career)}</div>
+                  <div class="rv2-kicker tight rv2-avoid-tag" style="color:var(--rv2-mute)">${esc(a.group || "")}</div>
+                </div>
+                <div class="rv2-avoid-why">${esc(a.why)}</div>
               </div>
             `).join("")}
-          </div>
-        </section>
-      ` : ""}
+          </section>
+        ` : ""}
 
-      <!-- § Sim insights -->
-      ${showSim ? `
-        <section class="rpt-section" id="rpt-sim">
-          <div class="rpt-section-head">
-            <div class="rpt-section-kicker">Behavioural signal</div>
-            <h2 class="rpt-section-title">What your simulations added.</h2>
-            <p class="rpt-section-lead">Not just what you said — what you did when the scenarios got hard.</p>
-          </div>
-          <div class="rpt-sim">
-            <div class="rpt-sim-stats">
+        <!-- ══════════════ V · SIM SIGNAL ══════════════ -->
+        ${showSim ? `
+          <section id="rv2-sim" class="rv2-section">
+            <div class="rv2-kicker rv2-eyebrow">V · Behavioural signal</div>
+            <h2 class="rv2-h2">What your simulations added.</h2>
+            <p class="rv2-lead">Not what you said — what you did when the scenarios got hard.</p>
+
+            <div class="rv2-sim">
               <div>
-                <div class="rpt-sim-stat-k">Simulated</div>
-                <div class="rpt-sim-stat-v">${r.simInsights.count}</div>
+                <div class="rv2-kicker tight">Simulated</div>
+                <div class="rv2-num-md">${r.simInsights.count}</div>
               </div>
               <div>
-                <div class="rpt-sim-stat-k">Average fit</div>
-                <div class="rpt-sim-stat-v">${r.simInsights.average}</div>
+                <div class="rv2-kicker tight">Average fit</div>
+                <div class="rv2-num-md">${r.simInsights.average}<span class="u">%</span></div>
               </div>
               <div>
-                <div class="rpt-sim-stat-k">Best fit</div>
-                <div class="rpt-sim-stat-v name">${esc(r.simInsights.best)}</div>
+                <div class="rv2-kicker tight">Best sim</div>
+                <div class="rv2-sim-name">${esc(r.simInsights.best)}</div>
               </div>
             </div>
-            <div class="rpt-sim-read">${esc(r.simInsights.read)}</div>
-          </div>
-        </section>
-      ` : ""}
+            <p class="rv2-sim-read">${esc(r.simInsights.read)}</p>
+          </section>
+        ` : ""}
 
-      <!-- § Evidence: quiz breakdown -->
-      ${showQuiz ? `
-        <section class="rpt-section" id="rpt-evidence">
-          <div class="rpt-section-head">
-            <div class="rpt-section-kicker">The evidence</div>
-            <h2 class="rpt-section-title">What the five quizzes actually said.</h2>
-            <p class="rpt-section-lead">Dimension by dimension, from your own answers — the raw signal behind every recommendation above.</p>
-          </div>
-          <div class="rpt-quizzes">
+        <!-- ══════════════ VI · EVIDENCE ══════════════ -->
+        ${showQuiz ? `
+          <section id="rv2-evidence" class="rv2-section">
+            <div class="rv2-kicker rv2-eyebrow">VI · The evidence</div>
+            <h2 class="rv2-h2">What the quizzes actually said.</h2>
+            <p class="rv2-lead">Dimension by dimension, from your own answers — the raw signal behind every recommendation above.</p>
+
             ${r.quizBreakdown.map((s, i) => `
-              <div class="rpt-quiz">
-                <div class="rpt-quiz-hdr">
-                  <div class="rpt-quiz-title">${esc(s.title)}</div>
-                  <div class="rpt-quiz-num">0${i+1} · Quiz ${i+1} of ${r.quizBreakdown.length}</div>
-                </div>
-                <div class="rpt-quiz-lead">${esc(s.lead)}</div>
+              <div class="rv2-quiz${i === r.quizBreakdown.length - 1 ? " last" : ""}">
+                <h3 class="rv2-quiz-h3"><span class="n">Quiz ${String(i + 1).padStart(2, "0")}</span>${esc(s.title)}</h3>
+                <p class="rv2-quiz-lead">${esc(s.lead)}</p>
                 ${s.bars && s.bars.length ? `
-                  <div class="rpt-quiz-bars">
-                    ${s.bars.map(b => {
-                      const cls = b.score >= 60 ? "high" : b.score >= 45 ? "mid" : "low";
-                      return `
-                        <div>
-                          <div class="rpt-quiz-bar-hdr">
-                            <span class="rpt-quiz-bar-lbl">${esc(b.label)}</span>
-                            <span class="rpt-quiz-bar-num">${b.score}%<span class="band">${esc(b.band)}</span></span>
-                          </div>
-                          <div class="rpt-quiz-bar-track">
-                            <div class="rpt-quiz-bar-fill ${cls}" style="width:${b.score}%;"></div>
-                          </div>
-                        </div>
-                      `;
-                    }).join("")}
+                  <div class="rv2-bars">
+                    ${s.bars.map(b => `
+                      <div class="rv2-bar">
+                        <span>${esc(b.label)}</span>
+                        <div class="rv2-bar-track"><div class="rv2-bar-fill" style="width:${Math.max(2, b.score)}%"></div></div>
+                        <span class="rv2-bar-num">${b.score} · <span class="rv2-bar-band ${bandCls(b.score, b.band)}">${esc(b.band)}</span></span>
+                      </div>
+                    `).join("")}
                   </div>
                 ` : ""}
                 ${s.picks && s.picks.length ? `
-                  <div class="rpt-quiz-picks">
-                    ${s.picks.map(p => `<span class="badge badge-brand">${esc(p)}</span>`).join("")}
+                  <div class="rv2-quiz-picks">
+                    ${s.picks.map(p => `<span class="rv2-pick">${esc(p)}</span>`).join("")}
                   </div>
                 ` : ""}
-                <div class="rpt-quiz-take">
-                  <span class="rpt-quiz-take-lbl">Takeaway</span>${esc(s.takeaway)}
-                </div>
+                <p class="rv2-take"><span class="lbl">Takeaway. </span>${esc(s.takeaway)}</p>
               </div>
             `).join("")}
+          </section>
+        ` : ""}
+
+        <!-- ══════════════ VII · PATTERNS ══════════════ -->
+        ${showPattern ? `
+          <section id="rv2-pattern" class="rv2-section">
+            <div class="rv2-kicker rv2-eyebrow">VII · The pattern</div>
+            <h2 class="rv2-h2">How your answers keep pointing.</h2>
+            <p class="rv2-lead">Threads that showed up across multiple quizzes — the shape of you at a distance.</p>
+
+            ${(r.patterns || []).map((p, i, arr) => `
+              <div class="rv2-pattern${!r.contrasts || !r.contrasts.length ? (i === arr.length - 1 ? " last" : "") : ""}">
+                <h4 class="rv2-pattern-t">${esc(p.title)}</h4>
+                <p class="rv2-pattern-d">${esc(p.detail)}</p>
+              </div>
+            `).join("")}
+
+            ${r.contrasts && r.contrasts.length ? `
+              <div class="rv2-kicker rv2-tension-head" style="margin-top:28px">Tensions</div>
+              ${r.contrasts.map(c => `<p class="rv2-tension">${esc(c)}</p>`).join("")}
+            ` : ""}
+          </section>
+        ` : ""}
+
+        <!-- ══════════════ VIII · PLAN ══════════════ -->
+        <section id="rv2-plan" class="rv2-section">
+          <div class="rv2-kicker rv2-eyebrow">VIII · Next six months</div>
+          <h2 class="rv2-h2">Test your fit for real.</h2>
+          <p class="rv2-lead">Concrete moves — small enough to start this month, real enough to tell you something.</p>
+
+          <ol class="rv2-plan">
+            ${(r.sixMonthPlan || []).map((p, i) => `
+              <li>
+                <span class="rv2-plan-num">${String(i + 1).padStart(2, "0")}</span>
+                <div>${esc(p)}</div>
+              </li>
+            `).join("")}
+          </ol>
+
+          <div class="rv2-actions rv2-no-print">
+            <button class="rv2-btn solid" data-action="go" data-screen="careers">Try more careers →</button>
+            <button class="rv2-btn" data-action="regenerate-report">Regenerate</button>
+            <button class="rv2-btn" data-action="print">Print / save PDF</button>
+          </div>
+
+          <div class="rv2-colophon">
+            <span>The Early Builder · Career Compass</span>
+            <span>${esc(preparedFor)} · ${esc(genDate.toLocaleDateString(undefined, { month: "short", year: "numeric" }))} · ${answersCount} ${answersCount === 1 ? "answer" : "answers"}</span>
           </div>
         </section>
-      ` : ""}
 
-      <!-- § Pattern: patterns + contrasts -->
-      ${showPattern ? `
-        <section class="rpt-section" id="rpt-pattern">
-          <div class="rpt-section-head">
-            <div class="rpt-section-kicker">The pattern</div>
-            <h2 class="rpt-section-title">How your answers keep pointing.</h2>
-            <p class="rpt-section-lead">Threads that showed up across multiple quizzes — the shape of you at a distance.</p>
-          </div>
-          ${r.patterns && r.patterns.length ? `
-            <div class="rpt-patterns">
-              ${r.patterns.map(p => `
-                <div class="rpt-pattern">
-                  <div class="rpt-pattern-t">${esc(p.title)}</div>
-                  <div class="rpt-pattern-d">${esc(p.detail)}</div>
-                </div>
-              `).join("")}
-            </div>
-          ` : ""}
-          ${r.contrasts && r.contrasts.length ? `
-            <div class="rpt-tensions">
-              ${r.contrasts.map(c => `
-                <div class="rpt-tension"><span class="rpt-tension-k">Tension</span>${esc(c)}</div>
-              `).join("")}
-            </div>
-          ` : ""}
-        </section>
-      ` : ""}
-
-      <!-- § Plan -->
-      <section class="rpt-section rpt-plan" id="rpt-plan">
-        <div class="rpt-section-head">
-          <div class="rpt-section-kicker">Next 6 months</div>
-          <h2 class="rpt-section-title">Test your fit for real.</h2>
-          <p class="rpt-section-lead">Concrete moves — small enough to start this month, real enough to tell you something.</p>
-        </div>
-        ${r.sixMonthPlan.map((p, i) => `
-          <div class="rpt-plan-item">
-            <div class="rpt-plan-num">${i + 1}</div>
-            <div class="rpt-plan-text">${esc(p)}</div>
-          </div>
-        `).join("")}
-      </section>
-
-      <div class="rpt-actions">
-        <button class="btn btn-primary" data-action="go" data-screen="careers">Try more careers →</button>
-        <button class="btn btn-ghost" data-action="regenerate-report">Regenerate report</button>
-        <button class="btn btn-ghost" data-action="print">Print / save PDF</button>
-      </div>
+      </article>
     </div>
   `;
 }
