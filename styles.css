@@ -2903,6 +2903,8 @@ body[data-chrome="sidebar"] #app { flex-direction: row; align-items: stretch; }
 .career-card:not(.coming-soon):hover::before { transform: scaleX(1); }
 .career-card.done { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
 .career-card.done::before { background: var(--grad-cool); }
+.career-card.recommended { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 25%, transparent); }
+.career-card.recommended::before { transform: scaleX(1); }
 .career-card.coming-soon {
   cursor: not-allowed;
   border-style: dashed;

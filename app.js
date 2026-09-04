@@ -355,12 +355,15 @@ const CAREER_FIT = {
     ["workstyle","solo",1,2],["workstyle","theory",1,5],["workstyle","careful",1,2],["workstyle","specialist",1,2],
   ],
   doctor: [
-    // DEFINING: empathy (patients), focus (long procedures), impact-value,
-    // social interest. detail_bad is deadly (missed dose kills).
-    ["interests","investigative",1,2],["interests","social",1,4],["interests","practical",1,3],
-    ["strengths","focus",1,5],["strengths","empathy",1,5],["strengths","hands",1,3],
-    ["values","stability",1,2],["values","impact",1,5],["values","prestige",1,2],
-    ["values","balance",-1,3],
+    // DEFINING: focus (long shifts, hard cases), investigative (diagnosis is a
+    // puzzle), detail_bad is deadly (missed dose kills). Empathy/social matter
+    // for some specialties (family med, peds, psych) but NOT others (radiology,
+    // pathology, surgery) — so kept as adjacent, not defining. Money/prestige/
+    // stability are legit motivators; impact is a plus but not required.
+    ["interests","investigative",1,4],["interests","practical",1,3],["interests","social",1,2],
+    ["strengths","focus",1,5],["strengths","hands",1,3],["strengths","empathy",1,2],
+    ["values","stability",1,3],["values","money",1,3],["values","prestige",1,3],
+    ["values","impact",1,2],["values","balance",-1,3],
     ["weaknesses","procrastination",-1,3],["weaknesses","detail_bad",-1,5],["weaknesses","boredom",-1,1],
     ["weaknesses","social_drain",-1,3],
     ["workstyle","structured",1,2],["workstyle","careful",1,2],["workstyle","detail",1,2],["workstyle","team",1,1],
@@ -5324,9 +5327,17 @@ function buildLocalReport() {
     })
     .filter(c => !c.dismissed)
     .sort((a, b) => b.fit - a.fit);
-  const avoid = scored.filter(c => c.fit < 55).slice(-3).reverse();
+  // "Don't pick" must reflect a genuine mismatch, not artificial drop from the
+  // dismissal penalty. Uses rawFit (pre-penalty) and a strict <45 threshold so
+  // only careers that are actually a poor match land here — the old <55 caught
+  // half the list because most raw fits sit in the 45-65 band.
+  const avoid = scored
+    .filter(c => c.rawFit < 45)
+    .sort((a, b) => a.rawFit - b.rawFit)
+    .slice(0, 3);
+  const pickable = scored;
 
-  const enrichedTop = scored.slice(0, 6).map(c => {
+  const enrichedTop = pickable.slice(0, 6).map(c => {
     const ins = CAREER_INSIGHTS[c.id] || (() => {
       const g = GENERIC_INSIGHTS_BY_GROUP[c.group] || GENERIC_INSIGHTS_BY_GROUP["Business & Money"];
       return { reality: g.reality(c.label), fitFor: g.fitFor(c.label), dos: g.dos, donts: g.donts };
@@ -5355,7 +5366,7 @@ function buildLocalReport() {
     headline: generateHeadline(dims),
     profile: generateProfile(dims),
     compass: buildCompass(dims),
-    compassFits: scored.slice(0, 3).map(c => ({
+    compassFits: pickable.slice(0, 3).map(c => ({
       career: c.label,
       fit: c.fit,
       why: whyCareerFits(c.id, dims),
@@ -5363,7 +5374,7 @@ function buildLocalReport() {
     quizBreakdown,
     patterns,
     contrasts,
-    topFields: getTopFields(scored),
+    topFields: getTopFields(pickable),
     topCareers: enrichedTop,
     dismissedCareers: [...dismissed].map(id => {
       const c = CAREERS.find(x => x.id === id);
@@ -5372,7 +5383,7 @@ function buildLocalReport() {
     avoid: avoid.map(c => ({ career: c.label, why: whyAvoid(c.id, dims), group: c.group })),
     superpowers: getSuperpowers(dims),
     watchouts: getWatchouts(dims),
-    sixMonthPlan: generatePlan(scored, dims),
+    sixMonthPlan: generatePlan(pickable, dims),
     simInsights,
   };
 }
@@ -6651,6 +6662,30 @@ function renderLogin() {
 }
 
 // ============================================================
+// REPORT UNLOCK GATE
+// ============================================================
+// After all 5 quizzes are done, the top-2 quiz-fit sim-ready careers become
+// "required" — the user must live them before the Compass report unlocks. Their
+// sim performance then feeds `simInsights` in the final report.
+function getRequiredSimCareers() {
+  const quizzesDone = QUIZZES.filter(q => Object.keys(state.quizAnswers[q.key] || {}).length === q.items.length).length;
+  if (quizzesDone < 5) return [];
+  const dims = scoreDimensions();
+  const dismissed = new Set(state.dismissedCareers || []);
+  return CAREERS
+    .filter(c => CAREER_FIT[c.id] && SIM_READY.has(c.id) && !dismissed.has(c.id))
+    .map(c => ({ id: c.id, label: c.label, fit: fitCareer(c.id, dims) }))
+    .sort((a, b) => b.fit - a.fit)
+    .slice(0, 2);
+}
+
+function requiredSimsRemaining() {
+  const req = getRequiredSimCareers();
+  const done = new Set(state.completedSims.map(s => s.career));
+  return req.filter(r => !done.has(r.label));
+}
+
+// ============================================================
 // DASHBOARD
 // ============================================================
 function renderDashboard() {
@@ -6666,14 +6701,23 @@ function renderDashboard() {
   const reportReady = !!state.report;
   const firstName = esc(u?.name?.split(" ")[0] || "there");
 
+  const requiredSims = getRequiredSimCareers();
+  const requiredRemaining = requiredSimsRemaining();
+  const requiredReady = quizzesDone === 5 && requiredSims.length === 2 && requiredRemaining.length === 0;
+
   let nextStep;
   if (quizzesDone < 5) {
     const nq = quizProgress.find(q => q.pct < 100);
     nextStep = { title: nq.title, meta: `${nq.done}/${nq.total} answered · ~2 min`, action: `quiz:${nq.key}` };
-  } else if (simsDone === 0) {
-    nextStep = { title: "Live your first career day", meta: "6 careers · ~5 min", action: "careers" };
-  } else if (simsDone < 2) {
-    nextStep = { title: "Try one more career", meta: "contrast sharpens your report", action: "careers" };
+  } else if (requiredRemaining.length) {
+    const next = requiredRemaining[0];
+    nextStep = {
+      title: `Live a day as a ${next.label}`,
+      meta: requiredRemaining.length === 2
+        ? `Your top two quiz matches — try both to unlock the report`
+        : `One more to unlock the report`,
+      action: "careers",
+    };
   } else if (!reportReady) {
     nextStep = { title: "Generate your Compass report", meta: "everything's ready", action: "report" };
   } else {
@@ -6710,7 +6754,7 @@ function renderDashboard() {
       <button class="dash2-next" data-action="go" data-screen="${nextStep.action}">
         <span class="dash2-next-icon">▶</span>
         <span class="dash2-next-body">
-          <span class="dash2-next-kicker">${quizzesDone < 5 ? "Pick up where you left off" : simsDone === 0 ? "Time for the fun part" : !reportReady ? "You're ready" : "Keep going"}</span>
+          <span class="dash2-next-kicker">${quizzesDone < 5 ? "Pick up where you left off" : requiredRemaining.length ? "Time for the fun part" : !reportReady ? "You're ready" : "Keep going"}</span>
           <span class="dash2-next-title">${esc(nextStep.title)}</span>
           <span class="dash2-next-meta">${esc(nextStep.meta)}</span>
         </span>
@@ -6781,8 +6825,13 @@ function renderDashboard() {
           </div>
           <div class="dash2-report ${reportReady ? "ready" : ""}">
             <div class="dash2-report-k">${reportReady ? "Your report is ready" : "Compass report"}</div>
-            <div class="dash2-report-v">${reportReady ? "View anytime" : `Unlocks after ${Math.max(0, 3 - quizzesDone)} more ${3 - quizzesDone === 1 ? "quiz" : "quizzes"}`}</div>
-            ${quizzesDone >= 3 ? `<button class="dash2-report-btn" data-action="go" data-screen="report">${reportReady ? "Open report →" : "Generate report →"}</button>` : ""}
+            <div class="dash2-report-v">${
+              reportReady ? "View anytime"
+              : quizzesDone < 5 ? `Unlocks after ${5 - quizzesDone} more ${5 - quizzesDone === 1 ? "quiz" : "quizzes"}`
+              : requiredRemaining.length ? `Unlocks after simulating ${requiredRemaining.map(r => esc(r.label)).join(" and ")}`
+              : "Ready to generate"
+            }</div>
+            ${reportReady || requiredReady ? `<button class="dash2-report-btn" data-action="go" data-screen="report">${reportReady ? "Open report →" : "Generate report →"}</button>` : ""}
           </div>
         </div>
       </div>
@@ -6990,6 +7039,7 @@ function quizTakeawayFor(key, sortedDims) {
 // ============================================================
 function renderCareers() {
   const filtered = state.careerFilter === "All" ? CAREERS : CAREERS.filter(c => (c.subgroup || c.group) === state.careerFilter);
+  const requiredIds = new Set(getRequiredSimCareers().map(r => r.id));
   return `
     ${renderNav()}
     <div class="container wide rise">
@@ -7009,9 +7059,11 @@ function renderCareers() {
       <div class="career-grid">
         ${filtered.filter(c => SIM_READY.has(c.id)).map(c => {
           const done = state.completedSims.find(s => s.career === c.label);
+          const recommended = requiredIds.has(c.id) && !done;
           return `
-            <button class="career-card ${done ? "done" : ""}" data-action="start-sim" data-career-id="${esc(c.id)}">
+            <button class="career-card ${done ? "done" : ""} ${recommended ? "recommended" : ""}" data-action="start-sim" data-career-id="${esc(c.id)}">
               <div class="career-card-top">
+                ${recommended ? `<span class="badge badge-brand">Recommended</span>` : ""}
                 ${done ? `<span class="badge badge-brand">${done.verdict.score}</span>` : ""}
               </div>
               <div class="career-card-cat">${esc((c.subgroup || c.group).toUpperCase())}</div>
@@ -8699,6 +8751,13 @@ async function generateReport() {
   const quizzesDone = QUIZZES.filter(q => Object.keys(state.quizAnswers[q.key] || {}).length === q.items.length).length;
   if (quizzesDone < 5) {
     state.reportError = `You need to finish all 5 quizzes first. ${5 - quizzesDone} still to go.`;
+    render();
+    return;
+  }
+  const remaining = requiredSimsRemaining();
+  if (remaining.length) {
+    const names = remaining.map(r => r.label).join(" and ");
+    state.reportError = `Your report unlocks after you live a day as ${names}. Those two are your strongest quiz matches — how you actually handle them shapes the report.`;
     render();
     return;
   }
